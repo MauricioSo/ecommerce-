@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd C:\\\\\\\\Users\\\\\\\\usuario\\\\\\\\Documents\\\\\\\\ecommerce)",
+      "Bash(docker-compose up *)",
+      "Read(//mnt/c/Users/usuario/Documents/**)",
+      "Bash(bun run *)",
+      "Bash(curl http://localhost:3000/health)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(psql -h localhost -U postgres -d ecommerce -c \"SELECT version\\(\\);\")",
+      "Bash(DATABASE_URL=\"postgres://postgres:postgres@172.26.0.2:5432/ecommerce\" bun run *)",
+      "Bash(node -e ' *)",
+      "PowerShell(docker cp *)",
+      "PowerShell(docker exec ecommerce-db *)"
+    ]
+  }
+}

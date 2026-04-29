@@ -1,0 +1,38 @@
+{
+  "name": "ecommerce",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --watch index.ts",
+    "start": "bun run index.ts",
+    "worker": "bun run worker.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.12",
+    "@types/pg": "^8.20.0",
+    "bun-types": "^1.3.12",
+    "drizzle-kit": "^0.31.10"
+  },
+  "peerDependencies": {
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@elysiajs/cookie": "^0.8.0",
+    "@elysiajs/html": "^1.4.0",
+    "@elysiajs/jwt": "^1.4.1",
+    "@elysiajs/static": "^1.4.9",
+    "drizzle-orm": "^0.45.2",
+    "elysia": "^1.4.28",
+    "eta": "^4.5.1",
+    "mercadopago": "^2.12.0",
+    "pg": "^8.20.0",
+    "transbank-sdk": "^6.1.1",
+    "zod": "^4.3.6"
+  }
+}

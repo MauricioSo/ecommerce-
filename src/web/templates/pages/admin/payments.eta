@@ -1,0 +1,21 @@
+<h1>Payments</h1>
+<table class="admin-table">
+  <thead>
+    <tr><th>ID</th><th>Order</th><th>Provider</th><th>Amount</th><th>Status</th><th>Created</th></tr>
+  </thead>
+  <tbody>
+    <% for (const p of it.payments) { %>
+    <tr>
+      <td><code><%= p.id.substring(0, 8) %></code></td>
+      <td><code><%= p.orderId.substring(0, 8) %></code></td>
+      <td><%= p.provider %></td>
+      <td>$<%= (p.amountCents / 100).toFixed(2) %></td>
+      <td><span class="badge badge-<%= p.status %>"><%= p.status %></span></td>
+      <td><%= new Date(p.createdAt).toLocaleString() %></td>
+    </tr>
+    <% } %>
+    <% if (it.payments.length === 0) { %>
+    <tr><td colspan="6" class="text-center">No payments yet.</td></tr>
+    <% } %>
+  </tbody>
+</table>

@@ -1,0 +1,41 @@
+<div class="account-container">
+  <div class="account-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)">
+      <a href="/cuenta" class="btn btn-ghost">Volver a mi cuenta</a>
+      <a href="/cuenta/direcciones/nueva" class="btn btn-primary">Agregar direccion</a>
+    </div>
+    <h1>Mis direcciones</h1>
+    <% if (it.addresses.length === 0) { %>
+      <div class="empty-state">
+        <p>No tienes direcciones guardadas.</p>
+        <a href="/cuenta/direcciones/nueva" class="btn btn-primary">Agregar direccion</a>
+      </div>
+    <% } else { %>
+      <div class="addresses-list" style="display:grid;gap:var(--sp-4)">
+        <% it.addresses.forEach(function(addr) { %>
+          <div class="address-card" style="background:var(--paper-white);border:1px solid rgba(255,255,255,0.62);border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);padding:var(--sp-4) <% if (addr.isDefault) { %>border-color:var(--ink-black)<% } %>">
+            <div class="address-body">
+              <p style="font-weight:500"><%= addr.line1 %></p>
+              <% if (addr.line2) { %><p style="color:var(--text-muted)"><%= addr.line2 %></p><% } %>
+              <p style="color:var(--text-muted)"><%= addr.city %>, <%= addr.state %> <%= addr.postalCode %></p>
+              <% if (addr.phone) { %><p style="color:var(--text-muted)">Tel: <%= addr.phone %></p><% } %>
+              <% if (addr.isDefault) { %><span class="chip" style="margin-top:var(--sp-2)">Principal</span><% } %>
+            </div>
+            <div class="address-actions" style="display:flex;gap:var(--sp-2);margin-top:var(--sp-3)">
+              <% if (!addr.isDefault) { %>
+                <form method="POST" action="/cuenta/direcciones/<%= addr.id %>/default">
+                  <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+                  <button type="submit" class="btn btn-ghost btn-sm">Marcar como principal</button>
+                </form>
+              <% } %>
+              <form method="POST" action="/cuenta/direcciones/<%= addr.id %>/eliminar">
+                <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+                <button type="submit" class="btn btn-ghost btn-sm" data-confirm="Eliminar esta direccion?">Eliminar</button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</div>

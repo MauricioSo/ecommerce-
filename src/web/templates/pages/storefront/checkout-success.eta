@@ -1,0 +1,38 @@
+<div class="order-success">
+  <% if (it.paymentStatus === 'approved' || !it.paymentStatus) { %>
+  <div class="success-icon">&#10003;</div>
+  <h1>Pedido confirmado!</h1>
+  <p>Gracias por tu compra. Tu orden ID es:</p>
+  <div class="order-id"><code><%= it.orderId %></code></div>
+  <p>Te enviaremos un email de confirmacion pronto.</p>
+  <a href="/" class="btn btn-secondary">Continuar comprando</a>
+  <% } else if (it.paymentStatus === 'pending' || it.paymentStatus === 'processing') { %>
+  <div class="pending-icon">&#9203;</div>
+  <h1>Pedido recibido - Procesando pago</h1>
+  <p>Tu orden <code><%= it.orderId %></code> fue creada y el pago esta siendo procesado.</p>
+  <p>Puedes ver el estado de tu orden:</p>
+  <div style="margin:var(--sp-3) 0">
+    <a href="/orders/<%= it.orderPublicToken %>" class="btn btn-primary">Ver estado del pedido</a>
+  </div>
+  <a href="/" class="btn btn-secondary">Continuar comprando</a>
+  <% } else if (it.paymentStatus === 'rejected' || it.paymentStatus === 'failed') { %>
+  <div class="error-icon">&#10007;</div>
+  <h1>Pago <%= it.paymentStatus === 'rejected' ? 'rechazado' : 'fallido' %></h1>
+  <p>Tu orden <code><%= it.orderId %></code> fue creada pero el pago no pudo completarse.</p>
+  <p>Por favor intenta de nuevo o contacta a soporte.</p>
+  <form action="/checkout/retry" method="POST" style="margin:var(--sp-3) 0">
+    <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+    <input type="hidden" name="orderId" value="<%= it.orderId %>">
+    <button type="submit" class="btn btn-primary">Reintentar pago</button>
+  </form>
+  <a href="/" class="btn btn-secondary">Continuar comprando</a>
+  <% } else { %>
+  <h1>Orden creada</h1>
+  <p>Tu orden ID es: <code><%= it.orderId %></code></p>
+  <p>Estado del pago: <strong><%= it.paymentStatus %></strong></p>
+  <div style="margin:var(--sp-3) 0">
+    <a href="/orders/<%= it.orderPublicToken %>" class="btn btn-primary">Ver estado del pedido</a>
+  </div>
+  <a href="/" class="btn btn-secondary">Continuar comprando</a>
+  <% } %>
+</div>

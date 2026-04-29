@@ -1,0 +1,59 @@
+<h1>Orders</h1>
+
+<div class="admin-toolbar">
+  <div class="order-filters">
+    <form method="get" action="/admin/orders" style="display:flex;gap:0.5rem;align-items:center;">
+      <select name="status" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="pending" <% if (it.currentStatus === 'pending') { %>selected<% } %>>Pending</option>
+        <option value="confirmed" <% if (it.currentStatus === 'confirmed') { %>selected<% } %>>Confirmed</option>
+        <option value="processing" <% if (it.currentStatus === 'processing') { %>selected<% } %>>Processing</option>
+        <option value="shipped" <% if (it.currentStatus === 'shipped') { %>selected<% } %>>Shipped</option>
+        <option value="delivered" <% if (it.currentStatus === 'delivered') { %>selected<% } %>>Delivered</option>
+        <option value="cancelled" <% if (it.currentStatus === 'cancelled') { %>selected<% } %>>Cancelled</option>
+        <option value="refunded" <% if (it.currentStatus === 'refunded') { %>selected<% } %>>Refunded</option>
+      </select>
+    </form>
+  </div>
+  <div class="text-muted"><%= it.total %> order(s)</div>
+</div>
+
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Order</th>
+      <th>Customer</th>
+      <th>Status</th>
+      <th>Total</th>
+      <th>Items</th>
+      <th>Created</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% for (const o of it.orders) { %>
+    <tr>
+      <td><a href="/admin/orders/<%= o.id %>"><code><%= o.id.substring(0, 8) %></code></a></td>
+      <td><%= o.customerEmail ?? 'N/A' %></td>
+      <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
+      <td>$<%= (o.totalCents / 100).toFixed(2) %></td>
+      <td><%= o.snapshot?.items?.length ?? '?' %></td>
+      <td><%= new Date(o.createdAt).toLocaleString() %></td>
+    </tr>
+    <% } %>
+    <% if (it.orders.length === 0) { %>
+    <tr><td colspan="6" class="text-center">No orders found.</td></tr>
+    <% } %>
+  </tbody>
+</table>
+
+<% if (it.totalPages > 1) { %>
+<div class="pagination" style="display:flex;gap:0.5rem;margin-top:1rem;align-items:center;">
+  <% if (it.page > 1) { %>
+  <a class="btn btn-sm" href="/admin/orders?page=<%= it.page - 1 %><% if (it.currentStatus) { %>&status=<%= it.currentStatus %><% } %>">&laquo; Prev</a>
+  <% } %>
+  <span class="text-muted">Page <%= it.page %> of <%= it.totalPages %></span>
+  <% if (it.page < it.totalPages) { %>
+  <a class="btn btn-sm" href="/admin/orders?page=<%= it.page + 1 %><% if (it.currentStatus) { %>&status=<%= it.currentStatus %><% } %>">Next &raquo;</a>
+  <% } %>
+</div>
+<% } %>

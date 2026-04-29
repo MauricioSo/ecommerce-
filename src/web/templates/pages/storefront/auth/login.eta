@@ -1,0 +1,23 @@
+<div class="auth-container">
+  <div class="auth-panel">
+    <h1>Iniciar sesion</h1>
+    <% if (it.error) { %>
+      <div class="alert alert-error"><%= it.error %></div>
+    <% } %>
+    <form method="POST" action="/cuenta/login">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <input type="hidden" name="next" value="<%= it.next ?? '/cuenta' %>">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required autocomplete="email" value="<%= it.email ?? '' %>">
+      </div>
+      <div class="form-group">
+        <label for="password">Contrasena</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary">Iniciar sesion</button>
+    </form>
+    <p><a href="/cuenta/recuperar">Olvidaste tu contrasena?</a></p>
+    <p>No tienes cuenta? <a href="/cuenta/registro">Crear cuenta</a></p>
+  </div>
+</div>

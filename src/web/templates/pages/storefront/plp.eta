@@ -1,0 +1,126 @@
+<div class="plp-page" style="display:grid;grid-template-columns:240px 1fr;gap:var(--sp-6);margin-top:var(--sp-4)">
+  <aside class="plp-sidebar" style="position:sticky;top:var(--sp-4);align-self:start">
+    <h3 style="font-size:15px;font-weight:600;margin-bottom:var(--sp-3)">Categorias</h3>
+    <ul class="category-list" style="list-style:none;padding:0;margin:0 0 var(--sp-4)">
+      <li style="margin-bottom:var(--sp-1)"><a href="/search" class="<%= !it.category.slug ? 'active' : '' %>" style="color:var(--text-muted);text-decoration:none;font-size:14px;<%= !it.category.slug ? 'color:var(--ink-black);font-weight:600' : '' %>">Todos</a></li>
+      <% for (const cat of it.categories) { %>
+      <li style="margin-bottom:var(--sp-1)"><a href="/categories/<%= cat.slug %>" class="<%= it.category.slug === cat.slug ? 'active' : '' %>" style="color:var(--text-muted);text-decoration:none;font-size:14px;<%= it.category.slug === cat.slug ? 'color:var(--ink-black);font-weight:600' : '' %>"><%= cat.name %></a></li>
+      <% } %>
+    </ul>
+
+    <form class="plp-filters" method="GET" action="<%= it.category.slug ? '/categories/' + it.category.slug : '/search' %>">
+      <% if (it.searchQuery) { %>
+      <input type="hidden" name="q" value="<%= it.searchQuery %>">
+      <% } %>
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:var(--sp-3)">Filtros</h3>
+      <div class="filter-group" style="margin-bottom:var(--sp-3)">
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:var(--sp-1)">Precio minimo ($)</label>
+        <input type="number" name="minPrice" value="<%= it.filters.minPrice %>" min="0" step="1000" class="filter-input" style="width:100%;padding:var(--sp-2);border:1px solid var(--border-muted);border-radius:var(--radius-md);background:var(--paper-white)">
+      </div>
+      <div class="filter-group" style="margin-bottom:var(--sp-3)">
+        <label style="font-size:13px;color:var(--text-muted);display:block;margin-bottom:var(--sp-1)">Precio maximo ($)</label>
+        <input type="number" name="maxPrice" value="<%= it.filters.maxPrice %>" min="0" step="1000" class="filter-input" style="width:100%;padding:var(--sp-2);border:1px solid var(--border-muted);border-radius:var(--radius-md);background:var(--paper-white)">
+      </div>
+      <div class="filter-group" style="margin-bottom:var(--sp-3)">
+        <label class="filter-checkbox-label" style="font-size:13px;cursor:pointer">
+          <input type="checkbox" name="inStock" value="1" <%= it.filters.inStock ? 'checked' : '' %> style="accent-color:var(--ink-black)">
+          Solo en stock
+        </label>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm" style="width:100%">Aplicar</button>
+    </form>
+  </aside>
+
+  <div class="plp-main">
+    <div class="plp-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)">
+      <h1 style="font-size:24px"><%= it.category.name %></h1>
+      <div class="plp-controls" style="display:flex;align-items:center;gap:var(--sp-3)">
+        <form method="GET" action="<%= it.category.slug ? '/categories/' + it.category.slug : '/search' %>" class="sort-form">
+          <% if (it.searchQuery) { %>
+          <input type="hidden" name="q" value="<%= it.searchQuery %>">
+          <% } %>
+          <% if (it.filters.minPrice) { %>
+          <input type="hidden" name="minPrice" value="<%= it.filters.minPrice %>">
+          <% } %>
+          <% if (it.filters.maxPrice) { %>
+          <input type="hidden" name="maxPrice" value="<%= it.filters.maxPrice %>">
+          <% } %>
+          <% if (it.filters.inStock) { %>
+          <input type="hidden" name="inStock" value="1">
+          <% } %>
+          <select name="sort" onchange="this.form.submit()" style="padding:var(--sp-2) var(--sp-3);border:1px solid var(--border-muted);border-radius:var(--radius-md);background:var(--paper-white);font-size:13px">
+            <option value="newest" <%= it.currentSort === 'newest' ? 'selected' : '' %>>Mas nuevos</option>
+            <option value="price_asc" <%= it.currentSort === 'price_asc' ? 'selected' : '' %>>Precio: menor a mayor</option>
+            <option value="price_desc" <%= it.currentSort === 'price_desc' ? 'selected' : '' %>>Precio: mayor a menor</option>
+            <option value="name_asc" <%= it.currentSort === 'name_asc' ? 'selected' : '' %>>Nombre A-Z</option>
+            <option value="name_desc" <%= it.currentSort === 'name_desc' ? 'selected' : '' %>>Nombre Z-A</option>
+          </select>
+        </form>
+        <% if (it.pagination) { %>
+        <span class="plp-count" style="font-size:13px;color:var(--text-muted)"><%= it.pagination.total %> producto<%= it.pagination.total !== 1 ? 's' : '' %></span>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (it.products.length > 0) { %>
+    <div class="product-grid">
+      <% for (const p of it.products) { %>
+      <a href="/products/<%= p.slug %>" class="product-card">
+        <div class="product-card-image">
+          <% if (p.baseImage) { %>
+          <img src="<%= p.baseImage %>" alt="<%= p.name %>" loading="lazy">
+          <% } else { %>
+          <div class="product-card-placeholder">Sin imagen</div>
+          <% } %>
+          <% if (p.totalStock === 0) { %>
+          <span class="product-badge badge-out" style="position:absolute;top:var(--sp-2);left:var(--sp-2);background:var(--error);color:white;font-size:11px;padding:2px 8px;border-radius:var(--radius-sm)">Agotado</span>
+          <% } else if (p.minPriceCents > 0 && p.maxPriceCents > p.minPriceCents) { %>
+          <span class="product-badge badge-sale" style="position:absolute;top:var(--sp-2);left:var(--sp-2);background:var(--sage);color:white;font-size:11px;padding:2px 8px;border-radius:var(--radius-sm)">Desde $<%= (p.minPriceCents / 100).toFixed(0) %></span>
+          <% } %>
+        </div>
+        <div class="product-card-body">
+          <h3><%= p.name %></h3>
+          <% if (p.categoryName) { %>
+          <p class="product-card-category"><%= p.categoryName %></p>
+          <% } %>
+          <div class="product-card-price">
+            <% if (p.minPriceCents > 0) { %>
+            <span class="price-current">$<%= (p.minPriceCents / 100).toLocaleString('es') %></span>
+            <% if (p.maxPriceCents > p.minPriceCents) { %>
+            <span class="price-range">— $<%= (p.maxPriceCents / 100).toLocaleString('es') %></span>
+            <% } %>
+            <% } else { %>
+            <span class="price-tbd">Consultar</span>
+            <% } %>
+          </div>
+        </div>
+      </a>
+      <% } %>
+    </div>
+
+    <% if (it.pagination && it.pagination.totalPages > 1) { %>
+    <nav class="pagination" aria-label="Paginacion" style="display:flex;gap:var(--sp-2);justify-content:center;margin-top:var(--sp-6)">
+      <% const p = it.pagination; %>
+      <% const qs = (it.searchQuery ? `&q=${encodeURIComponent(it.searchQuery)}` : '') + (it.currentSort ? `&sort=${it.currentSort}` : '') + (it.filters.minPrice ? `&minPrice=${it.filters.minPrice}` : '') + (it.filters.maxPrice ? `&maxPrice=${it.filters.maxPrice}` : '') + (it.filters.inStock ? '&inStock=1' : ''); %>
+      <% if (p.page > 1) { %>
+      <a href="?page=<%= p.page - 1 %><%= qs %>" class="btn btn-sm">Anterior</a>
+      <% } %>
+      <% const start = Math.max(1, p.page - 2); %>
+      <% const end = Math.min(p.totalPages, p.page + 2); %>
+      <% for (let i = start; i <= end; i++) { %>
+      <a href="?page=<%= i %><%= qs %>" class="btn btn-sm <%= i === p.page ? 'btn-primary' : 'btn-secondary' %>"><%= i %></a>
+      <% } %>
+      <% if (p.page < p.totalPages) { %>
+      <a href="?page=<%= p.page + 1 %><%= qs %>" class="btn btn-sm">Siguiente</a>
+      <% } %>
+    </nav>
+    <% } %>
+
+    <% } else { %>
+    <div class="empty-state">
+      <p>No se encontraron productos.</p>
+      <a href="/search" class="btn btn-secondary">Ver todos los productos</a>
+    </div>
+    <% } %>
+  </div>
+</div>

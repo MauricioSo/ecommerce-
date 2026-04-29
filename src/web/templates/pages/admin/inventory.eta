@@ -1,0 +1,47 @@
+<h1>Inventory</h1>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>SKU</th>
+      <th>Variant</th>
+      <th>Physical</th>
+      <th>Reserved</th>
+      <th>Adjusted</th>
+      <th>Available</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% for (const item of it.items) { %>
+    <tr>
+      <td><%= item.productName ?? "—" %></td>
+      <td><code><%= item.sku ?? "—" %></code></td>
+      <td><%= item.variantLabel ?? "—" %></td>
+      <td><%= item.physicalStock %></td>
+      <td><%= item.reservedStock %></td>
+      <td><%= item.adjustedStock %></td>
+      <td id="stock-<%= item.skuId %>">
+        <strong class="<%= item.availableStock <= 0 ? 'text-danger' : item.availableStock <= 5 ? 'text-warning' : 'text-success' %>">
+          <%= item.availableStock %>
+        </strong>
+      </td>
+      <td>
+        <details class="inline-form">
+          <summary>Adjust</summary>
+          <form hx-post="/admin/inventory/adjust" hx-target="#toast-area" hx-swap="innerHTML" class="adjust-form">
+            <input type="hidden" name="skuId" value="<%= item.skuId %>">
+            <input type="number" name="delta" placeholder="+/- units" required>
+            <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+          </form>
+        </details>
+        <a href="/admin/inventory/<%= item.skuId %>/ledger" class="btn btn-sm">Ledger</a>
+      </td>
+    </tr>
+    <% } %>
+    <% if (it.items.length === 0) { %>
+    <tr><td colspan="8" class="text-center">No inventory items. Add products and SKUs first.</td></tr>
+    <% } %>
+  </tbody>
+</table>
+<div id="toast-area"></div>

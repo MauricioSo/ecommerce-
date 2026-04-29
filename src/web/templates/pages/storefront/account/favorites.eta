@@ -1,0 +1,36 @@
+<div class="account-container">
+  <div class="account-section">
+    <div style="display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-4)">
+      <a href="/cuenta" class="btn btn-ghost">Volver a mi cuenta</a>
+    </div>
+    <h1>Mis favoritos</h1>
+    <% if (it.items.length === 0) { %>
+      <div class="empty-state">
+        <p>No tienes productos en tus favoritos.</p>
+        <a href="/" class="btn btn-secondary">Explorar productos</a>
+      </div>
+    <% } else { %>
+      <div class="product-grid">
+        <% it.items.forEach(function(item) { %>
+          <div class="product-card">
+            <a href="/products/<%= item.productSlug %>" style="text-decoration:none">
+              <div class="product-card-body">
+                <h3><%= item.productName %></h3>
+                <div class="product-card-price">
+                  <span class="price-current">$<%= (item.priceCents / 100).toLocaleString() %></span>
+                </div>
+                <p class="<%= item.inStock ? 'in-stock' : 'out-of-stock' %>" style="font-size:12px;margin-top:var(--sp-2)">
+                  <%= item.inStock ? 'Disponible' : 'Sin stock' %>
+                </p>
+              </div>
+            </a>
+            <form method="POST" action="/cuenta/favoritos/<%= item.skuId %>/eliminar">
+              <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+              <button type="submit" class="btn btn-ghost btn-sm" style="width:100%;margin-top:var(--sp-2)">Eliminar</button>
+            </form>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</div>

@@ -1,0 +1,48 @@
+<div class="account-container">
+  <div class="account-section">
+    <div style="display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-4)">
+      <a href="/cuenta/direcciones" class="btn btn-ghost">Cancelar</a>
+    </div>
+    <h1>Agregar direccion</h1>
+    <form method="POST" action="/cuenta/direcciones" style="max-width:560px">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <div class="form-group">
+        <label for="line1">Direccion</label>
+        <input type="text" id="line1" name="line1" required autocomplete="address-line1">
+      </div>
+      <div class="form-group">
+        <label for="line2">Depto / Oficina (opcional)</label>
+        <input type="text" id="line2" name="line2" autocomplete="address-line2">
+      </div>
+      <div class="form-group">
+        <label for="neighborhood">Barrio / Colonia</label>
+        <input type="text" id="neighborhood" name="neighborhood">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="city">Ciudad</label>
+          <input type="text" id="city" name="city" required autocomplete="address-level2">
+        </div>
+        <div class="form-group">
+          <label for="state">Region / Estado</label>
+          <input type="text" id="state" name="state" required autocomplete="address-level1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="postalCode">Codigo postal</label>
+        <input type="text" id="postalCode" name="postalCode" required autocomplete="postal-code">
+      </div>
+      <div class="form-group">
+        <label for="phone">Telefono</label>
+        <input type="tel" id="phone" name="phone" autocomplete="tel">
+      </div>
+      <div class="form-group">
+        <label for="reference">Referencia de entrega (opcional)</label>
+        <textarea id="reference" name="reference" maxlength="200" rows="2"></textarea>
+      </div>
+      <div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4)">
+        <button type="submit" class="btn btn-primary">Guardar direccion</button>
+      </div>
+    </form>
+  </div>
+</div>

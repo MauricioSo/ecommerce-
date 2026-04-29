@@ -1,0 +1,141 @@
+<h1>CRM Tasks</h1>
+
+<div class="admin-toolbar">
+  <div class="task-filters">
+    <form method="get" action="/admin/crm/tasks" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+      <select name="priority" onchange="this.form.submit()">
+        <option value="">All Priorities</option>
+        <option value="low" <% if (it.filters.priority === 'low') { %>selected<% } %>>Low</option>
+        <option value="normal" <% if (it.filters.priority === 'normal') { %>selected<% } %>>Normal</option>
+        <option value="high" <% if (it.filters.priority === 'high') { %>selected<% } %>>High</option>
+        <option value="urgent" <% if (it.filters.priority === 'urgent') { %>selected<% } %>>Urgent</option>
+      </select>
+      <button type="submit" class="btn btn-sm">Filter</button>
+      <a href="/admin/crm/tasks" class="btn btn-sm btn-secondary">Clear</a>
+    </form>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;margin-top:1rem;">
+  <% const urgentTasks = it.tasks.filter(t => t.priority === 'urgent'); %>
+  <% const overdueTasks = it.tasks.filter(t => t.dueAt && new Date(t.dueAt) < new Date() && t.status !== 'done'); %>
+
+  <div class="checkout-section" style="border-left:3px solid #dc3545;">
+    <h3 style="color:#dc3545;">Urgent (<%= urgentTasks.length %>)</h3>
+    <% if (urgentTasks.length === 0) { %>
+    <p class="text-muted">No urgent tasks.</p>
+    <% } else { %>
+    <div style="display:grid;gap:0.5rem;">
+      <% for (const t of urgentTasks) { %>
+      <div style="padding:0.75rem;background:#fff;border:1px solid #dc3545;border-radius:4px;">
+        <div style="font-weight:bold;margin-bottom:0.25rem;"><%= t.title %></div>
+        <div style="font-size:0.85rem;color:#666;">
+          <span class="badge badge-<%= t.type %>"><%= t.type %></span>
+          <span class="badge badge-<%= t.status %>"><%= t.status %></span>
+        </div>
+        <div style="font-size:0.8rem;margin-top:0.25rem;">
+          <% if (t.dueAt) { %>Due: <%= new Date(t.dueAt).toLocaleDateString() %><% } %>
+        </div>
+        <div style="margin-top:0.5rem;display:flex;gap:0.25rem;">
+          <form action="/admin/crm/tasks/<%= t.id %>/status" method="post" style="flex:1;">
+            <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+            <input type="hidden" name="status" value="done">
+            <button type="submit" class="btn btn-sm btn-success btn-block">Done</button>
+          </form>
+          <% if (t.customerId) { %>
+          <a href="/admin/crm/customers/<%= t.customerId %>" class="btn btn-sm btn-secondary">View Customer</a>
+          <% } %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="checkout-section" style="border-left:3px solid #fd7e14;">
+    <h3 style="color:#fd7e14;">Overdue (<%= overdueTasks.length %>)</h3>
+    <% if (overdueTasks.length === 0) { %>
+    <p class="text-muted">No overdue tasks.</p>
+    <% } else { %>
+    <div style="display:grid;gap:0.5rem;">
+      <% for (const t of overdueTasks) { %>
+      <div style="padding:0.75rem;background:#fff;border:1px solid #fd7e14;border-radius:4px;">
+        <div style="font-weight:bold;margin-bottom:0.25rem;"><%= t.title %></div>
+        <div style="font-size:0.85rem;color:#666;">
+          <span class="badge badge-<%= t.type %>"><%= t.type %></span>
+          <span class="badge badge-<%= t.priority %>"><%= t.priority %></span>
+        </div>
+        <div style="font-size:0.8rem;margin-top:0.25rem;color:#dc3545;">
+          Was due: <%= new Date(t.dueAt).toLocaleDateString() %>
+        </div>
+        <div style="margin-top:0.5rem;display:flex;gap:0.25rem;">
+          <form action="/admin/crm/tasks/<%= t.id %>/status" method="post" style="flex:1;">
+            <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+            <input type="hidden" name="status" value="done">
+            <button type="submit" class="btn btn-sm btn-success btn-block">Done</button>
+          </form>
+          <% if (t.customerId) { %>
+          <a href="/admin/crm/customers/<%= t.customerId %>" class="btn btn-sm btn-secondary">View Customer</a>
+          <% } %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="checkout-section" style="margin-top:1rem;">
+  <h3>All Open Tasks (<%= it.tasks.length %>)</h3>
+  <% if (it.tasks.length === 0) { %>
+  <p class="text-muted">No open tasks.</p>
+  <% } else { %>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Customer</th>
+        <th>Type</th>
+        <th>Priority</th>
+        <th>Due</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (const t of it.tasks) { %>
+      <tr>
+        <td><%= t.title %></td>
+        <td>
+          <% if (t.customerId) { %>
+          <a href="/admin/crm/customers/<%= t.customerId %>">View</a>
+          <% } else { %>
+          -
+          <% } %>
+        </td>
+        <td><span class="badge badge-secondary"><%= t.type %></span></td>
+        <td><span class="badge badge-<%= t.priority === 'urgent' ? 'danger' : 'warning' %>"><%= t.priority %></span></td>
+        <td>
+          <% if (t.dueAt) { %>
+          <% const isOverdue = new Date(t.dueAt) < new Date() && t.status !== 'done'; %>
+          <span style="<% if (isOverdue) { %>color:#dc3545;<% } %>"><%= new Date(t.dueAt).toLocaleDateString() %></span>
+          <% } else { %>
+          -
+          <% } %>
+        </td>
+        <td>
+          <form action="/admin/crm/tasks/<%= t.id %>/status" method="post" style="display:inline;">
+            <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+            <input type="hidden" name="status" value="done">
+            <button type="submit" class="btn btn-sm btn-success">Done</button>
+          </form>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<div style="margin-top:2rem;">
+  <a href="/admin/crm/customers" class="btn btn-secondary">Back to Customers</a>
+</div>

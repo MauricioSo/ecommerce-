@@ -1,0 +1,45 @@
+<div class="auth-container">
+  <div class="auth-panel">
+    <h1>Crear cuenta</h1>
+    <% if (it.error) { %>
+      <div class="alert alert-error"><%= it.error %></div>
+    <% } %>
+    <form method="POST" action="/cuenta/registro">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <div class="form-group">
+        <label for="firstName">Nombre</label>
+        <input type="text" id="firstName" name="firstName" required autocomplete="given-name" value="<%= it.firstName ?? '' %>">
+      </div>
+      <div class="form-group">
+        <label for="lastName">Apellido</label>
+        <input type="text" id="lastName" name="lastName" required autocomplete="family-name" value="<%= it.lastName ?? '' %>">
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required autocomplete="email" value="<%= it.email ?? '' %>">
+      </div>
+      <div class="form-group">
+        <label for="password">Contrasena</label>
+        <input type="password" id="password" name="password" required autocomplete="new-password" minlength="8">
+        <small style="font-size:11px;color:var(--text-muted)">Minimo 8 caracteres, al menos 1 numero</small>
+      </div>
+      <div class="form-group">
+        <label for="passwordConfirm">Confirmar contrasena</label>
+        <input type="password" id="passwordConfirm" name="passwordConfirm" required autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label for="country">Pais</label>
+        <select id="country" name="country">
+          <option value="CHL" <% if (it.country === 'CHL' || !it.country) { %>selected<% } %>>Chile</option>
+          <option value="ARG" <% if (it.country === 'ARG') { %>selected<% } %>>Argentina</option>
+          <option value="PER" <% if (it.country === 'PER') { %>selected<% } %>>Peru</option>
+          <option value="COL" <% if (it.country === 'COL') { %>selected<% } %>>Colombia</option>
+          <option value="MEX" <% if (it.country === 'MEX') { %>selected<% } %>>Mexico</option>
+          <option value="BRA" <% if (it.country === 'BRA') { %>selected<% } %>>Brasil</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Crear cuenta</button>
+    </form>
+    <p>Ya tienes cuenta? <a href="/cuenta/login">Iniciar sesion</a></p>
+  </div>
+</div>

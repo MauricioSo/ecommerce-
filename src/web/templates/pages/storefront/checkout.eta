@@ -1,0 +1,110 @@
+<div class="checkout-container">
+  <h1 style="margin-bottom:var(--sp-4)">Checkout</h1>
+  <div class="checkout-stepper">
+    <span class="step active">1. Direccion</span>
+    <span class="step-separator">/</span>
+    <span class="step">2. Envio</span>
+    <span class="step-separator">/</span>
+    <span class="step">3. Pago</span>
+  </div>
+  <% if (it.customer) { %>
+    <div class="alert alert-info" style="margin:var(--sp-3) 0;background:var(--sage-bg);border:1px solid var(--sage);border-radius:var(--radius);padding:var(--sp-3)">
+      Comprando como <strong><%= it.customer.email %></strong>
+    </div>
+  <% } %>
+  <div class="checkout-layout">
+    <div class="checkout-form">
+      <div class="checkout-section">
+        <h2>Direccion de envio</h2>
+        <% if (it.error) { %>
+          <div class="alert alert-error"><%= it.error %></div>
+        <% } %>
+        <form method="POST" action="/checkout/direccion">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <input type="hidden" name="checkoutId" value="<%= it.checkoutId %>">
+          <% if (!it.customer) { %>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" required autocomplete="email" value="<%= it.prefill.email ?? '' %>">
+            </div>
+          <% } %>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">Nombre</label>
+              <input type="text" id="firstName" name="firstName" required autocomplete="given-name" value="<%= it.prefill.firstName ?? '' %>">
+            </div>
+            <div class="form-group">
+              <label for="lastName">Apellido</label>
+              <input type="text" id="lastName" name="lastName" required autocomplete="family-name" value="<%= it.prefill.lastName ?? '' %>">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="phone">Telefono</label>
+            <input type="tel" id="phone" name="phone" required autocomplete="tel" value="<%= it.prefill.phone ?? '' %>">
+          </div>
+          <div class="form-group">
+            <label for="line1">Direccion</label>
+            <input type="text" id="line1" name="line1" required autocomplete="address-line1" value="<%= it.prefill.line1 ?? '' %>">
+          </div>
+          <div class="form-group">
+            <label for="line2">Depto / Oficina (opcional)</label>
+            <input type="text" id="line2" name="line2" autocomplete="address-line2" value="<%= it.prefill.line2 ?? '' %>">
+          </div>
+          <div class="form-group">
+            <label for="neighborhood">Barrio / Colonia</label>
+            <input type="text" id="neighborhood" name="neighborhood" value="<%= it.prefill.neighborhood ?? '' %>">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="city">Ciudad</label>
+              <input type="text" id="city" name="city" required autocomplete="address-level2" value="<%= it.prefill.city ?? '' %>">
+            </div>
+            <div class="form-group">
+              <label for="state">Region / Estado</label>
+              <input type="text" id="state" name="state" required autocomplete="address-level1" value="<%= it.prefill.state ?? '' %>">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="postalCode">Codigo postal</label>
+              <input type="text" id="postalCode" name="postalCode" required autocomplete="postal-code" value="<%= it.prefill.postalCode ?? '' %>">
+            </div>
+            <div class="form-group">
+              <label for="country">Pais</label>
+              <select id="country" name="country">
+                <option value="CHL" <% if (it.countryCode === 'CHL') { %>selected<% } %>>Chile</option>
+                <option value="ARG" <% if (it.countryCode === 'ARG') { %>selected<% } %>>Argentina</option>
+                <option value="PER" <% if (it.countryCode === 'PER') { %>selected<% } %>>Peru</option>
+                <option value="COL" <% if (it.countryCode === 'COL') { %>selected<% } %>>Colombia</option>
+                <option value="MEX" <% if (it.countryCode === 'MEX') { %>selected<% } %>>Mexico</option>
+                <option value="BRA" <% if (it.countryCode === 'BRA') { %>selected<% } %>>Brasil</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reference">Referencia de entrega (opcional)</label>
+            <textarea id="reference" name="reference" maxlength="200" rows="2"><%= it.prefill.reference ?? '' %></textarea>
+          </div>
+          <div class="form-group">
+            <label for="notes">Notas del pedido (opcional)</label>
+            <textarea id="notes" name="notes" maxlength="500" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg">Continuar a envio</button>
+        </form>
+      </div>
+    </div>
+    <div class="checkout-summary" style="background:var(--paper-white);border:1px solid rgba(255,255,255,0.62);border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);padding:var(--sp-4)">
+      <h3 style="font-size:18px;margin-bottom:var(--sp-3)">Resumen</h3>
+      <% it.items.forEach(function(item) { %>
+        <div class="summary-item">
+          <span style="color:var(--text-muted)"><%= item.productName ?? 'Producto' %> x<%= item.quantity %></span>
+          <span>$<%= ((item.unitPriceCents * item.quantity) / 100).toLocaleString() %></span>
+        </div>
+      <% }) %>
+      <div class="summary-total">
+        <strong>Subtotal: </strong>
+        <strong>$<%= (it.subtotal / 100).toLocaleString() %></strong>
+      </div>
+    </div>
+  </div>
+</div>

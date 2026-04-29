@@ -1,0 +1,31 @@
+<h1>Returns</h1>
+<% if (it.returns.length === 0) { %>
+<p>No return requests.</p>
+<% } else { %>
+<table class="cart-table">
+  <thead><tr><th>ID</th><th>Order</th><th>Item</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+    <% for (const r of it.returns) { %>
+    <tr>
+      <td><code><%= r.id.substring(0, 8) %></code></td>
+      <td><a href="/admin/orders/<%= r.orderId %>"><code><%= r.orderId.substring(0, 8) %></code></a></td>
+      <td><code><%= r.orderItemId.substring(0, 8) %></code></td>
+      <td><%= r.reason %></td>
+      <td><span class="badge-<%= r.status %>"><%= r.status %></span></td>
+      <td>
+        <% if (r.status === 'requested') { %>
+        <form action="/admin/fulfillment/returns/<%= r.id %>/approve" method="POST" style="display:inline">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <button type="submit" class="btn btn-primary" style="padding:0.25rem 0.5rem;font-size:0.8rem">Approve</button>
+        </form>
+        <form action="/admin/fulfillment/returns/<%= r.id %>/reject" method="POST" style="display:inline">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <button type="submit" class="btn btn-danger" style="padding:0.25rem 0.5rem;font-size:0.8rem">Reject</button>
+        </form>
+        <% } %>
+      </td>
+    </tr>
+    <% } %>
+  </tbody>
+</table>
+<% } %>

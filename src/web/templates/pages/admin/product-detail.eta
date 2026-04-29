@@ -1,0 +1,122 @@
+<h1><%= it.product.name %></h1>
+<div class="admin-detail-header">
+  <span class="badge badge-<%= it.product.editorialStatus %>"><%= it.product.editorialStatus %></span>
+  <span><%= it.category?.name ?? "No category" %></span>
+  <div class="admin-detail-actions">
+    <% if (it.product.editorialStatus === "draft" || it.product.editorialStatus === "review") { %>
+    <form action="/admin/products/<%= it.product.id %>/publish" method="POST" hx-post="/admin/products/<%= it.product.id %>/publish" hx-target="#toast-area" hx-swap="innerHTML">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <button type="submit" class="btn btn-primary btn-sm">Publish</button>
+    </form>
+    <% } %>
+    <% if (it.product.editorialStatus === "published") { %>
+    <form action="/admin/products/<%= it.product.id %>/archive" method="POST" hx-post="/admin/products/<%= it.product.id %>/archive" hx-target="#toast-area" hx-swap="innerHTML">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <button type="submit" class="btn btn-warning btn-sm">Archive</button>
+    </form>
+    <% } %>
+    <a href="/admin/products" class="btn btn-sm">Back</a>
+  </div>
+</div>
+<div id="toast-area"></div>
+
+<div class="admin-section">
+  <h2>Product Info</h2>
+  <form action="/admin/products/<%= it.product.id %>" method="POST" class="admin-form">
+    <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" name="name" value="<%= it.product.name %>" required>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea name="description" rows="3"><%= it.product.description ?? '' %></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+  </form>
+</div>
+
+<div class="admin-section">
+  <h2>Attributes</h2>
+  <% if (it.categoryAttrs.length > 0) { %>
+  <form action="/admin/products/<%= it.product.id %>/attributes" method="POST" class="admin-form">
+    <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+    <% for (const attr of it.categoryAttrs) { %>
+    <%
+      const existing = it.attributes.find((a: any) => a.attributeId === attr.id);
+    %>
+    <div class="form-group">
+      <label><%= attr.name %><%= attr.isRequired ? ' *' : '' %></label>
+      <% if (attr.type === 'select' && attr.options) { %>
+      <select name="value">
+        <option value="">— Select —</option>
+        <% for (const opt of attr.options) { %>
+        <option value="<%= opt %>" <%= existing?.value === opt ? 'selected' : '' %>><%= opt %></option>
+        <% } %>
+      </select>
+      <input type="hidden" name="attributeId" value="<%= attr.id %>">
+      <% } else { %>
+      <input type="text" name="value" value="<%= existing?.value ?? '' %>">
+      <input type="hidden" name="attributeId" value="<%= attr.id %>">
+      <% } %>
+    </div>
+    <% } %>
+    <button type="submit" class="btn btn-primary btn-sm">Save Attributes</button>
+  </form>
+  <% } else { %>
+  <p class="text-muted">Assign a category to define attributes.</p>
+  <% } %>
+</div>
+
+<div class="admin-section">
+  <h2>Variants / SKUs</h2>
+  <table class="admin-table">
+    <thead>
+      <tr><th>SKU</th><th>Label</th><th>Price</th><th>Compare at</th><th>Active</th></tr>
+    </thead>
+    <tbody>
+      <% for (const s of it.skus) { %>
+      <tr>
+        <td><code><%= s.sku %></code></td>
+        <td><%= s.variantLabel ?? "—" %></td>
+        <td>$<%= (s.priceCents / 100).toFixed(2) %></td>
+        <td><%= s.compareAtPriceCents ? `$${(s.compareAtPriceCents / 100).toFixed(2)}` : "—" %></td>
+        <td><%= s.isActive ? "Yes" : "No" %></td>
+      </tr>
+      <% } %>
+      <% if (it.skus.length === 0) { %>
+      <tr><td colspan="5" class="text-center">No variants yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+
+  <details class="admin-add-form">
+    <summary>+ Add Variant</summary>
+    <form action="/admin/products/<%= it.product.id %>/skus" method="POST" class="admin-form">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <div class="form-row">
+        <div class="form-group">
+          <label>SKU Code *</label>
+          <input type="text" name="sku" required placeholder="e.g. PROD-BLK-M">
+        </div>
+        <div class="form-group">
+          <label>Variant Label</label>
+          <input type="text" name="variantLabel" placeholder="e.g. Black / Medium">
+        </div>
+        <div class="form-group">
+          <label>Price (cents) *</label>
+          <input type="number" name="priceCents" required placeholder="1999">
+        </div>
+        <div class="form-group">
+          <label>Compare at (cents)</label>
+          <input type="number" name="compareAtPriceCents" placeholder="2499">
+        </div>
+        <div class="form-group">
+          <label>Currency</label>
+          <input type="text" name="currency" value="USD" maxlength="3">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Add Variant</button>
+    </form>
+  </details>
+</div>

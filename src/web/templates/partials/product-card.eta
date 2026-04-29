@@ -1,0 +1,30 @@
+<a href="/products/<%= it.product.slug %>" class="product-card">
+  <div class="product-card-image">
+    <% if (it.product.baseImage) { %>
+    <img src="<%= it.product.baseImage %>" alt="<%= it.product.name %>" loading="lazy">
+    <% } else { %>
+    <div class="product-card-placeholder">Sin imagen</div>
+    <% } %>
+    <% if (it.product.totalStock === 0) { %>
+    <span class="product-badge badge-out">Agotado</span>
+    <% } else if (it.product.isOnSale) { %>
+    <span class="product-badge badge-sale">Oferta</span>
+    <% } %>
+  </div>
+  <div class="product-card-body">
+    <h3><%= it.product.name %></h3>
+    <% if (it.product.categoryName) { %>
+    <p class="product-card-category"><%= it.product.categoryName %></p>
+    <% } %>
+    <div class="product-card-price">
+      <% if (it.product.minPriceCents > 0) { %>
+      <span class="price-current">$<%= (it.product.minPriceCents / 100).toLocaleString('es') %></span>
+      <% if (it.product.maxPriceCents > it.product.minPriceCents) { %>
+      <span class="price-range">— $<%= (it.product.maxPriceCents / 100).toLocaleString('es') %></span>
+      <% } %>
+      <% } else { %>
+      <span class="price-tbd">Consultar</span>
+      <% } %>
+    </div>
+  </div>
+</a>

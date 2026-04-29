@@ -1,0 +1,53 @@
+<div class="account-container">
+  <div class="account-section">
+    <div style="display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-4)">
+      <a href="/cuenta" class="btn btn-ghost">Volver a mi cuenta</a>
+    </div>
+    <h1>Mi perfil</h1>
+    <% if (it.success) { %>
+      <div class="alert alert-success">Perfil actualizado correctamente.</div>
+    <% } %>
+    <form method="POST" action="/cuenta/perfil" style="max-width:560px">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">Nombre</label>
+          <input type="text" id="firstName" name="firstName" value="<%= it.customer.firstName ?? '' %>" required autocomplete="given-name">
+        </div>
+        <div class="form-group">
+          <label for="lastName">Apellido</label>
+          <input type="text" id="lastName" name="lastName" value="<%= it.customer.lastName ?? '' %>" required autocomplete="family-name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" value="<%= it.customer.email %>" disabled>
+      </div>
+      <div class="form-group">
+        <label for="phone">Telefono</label>
+        <input type="tel" id="phone" name="phone" value="<%= it.customer.phone ?? '' %>" autocomplete="tel" placeholder="+56 9 1234 5678">
+      </div>
+      <div class="form-group">
+        <label for="documentType">Tipo de documento</label>
+        <select id="documentType" name="documentType">
+          <option value="">Seleccionar...</option>
+          <option value="rut" <% if (it.customer.documentType === 'rut') { %>selected<% } %>>RUT (Chile)</option>
+          <option value="dni" <% if (it.customer.documentType === 'dni') { %>selected<% } %>>DNI</option>
+          <option value="cedula" <% if (it.customer.documentType === 'cedula') { %>selected<% } %>>Cedula</option>
+          <option value="cpf" <% if (it.customer.documentType === 'cpf') { %>selected<% } %>>CPF (Brasil)</option>
+          <option value="cuit" <% if (it.customer.documentType === 'cuit') { %>selected<% } %>>CUIT (Argentina)</option>
+          <option value="nit" <% if (it.customer.documentType === 'nit') { %>selected<% } %>>NIT (Colombia)</option>
+          <option value="rfc" <% if (it.customer.documentType === 'rfc') { %>selected<% } %>>RFC (Mexico)</option>
+          <option value="passport" <% if (it.customer.documentType === 'passport') { %>selected<% } %>>Pasaporte</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="documentNumber">Numero de documento</label>
+        <input type="text" id="documentNumber" name="documentNumber" value="<%= it.customer.documentNumber ?? '' %>">
+      </div>
+      <div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4)">
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,52 @@
+<div class="checkout-container">
+  <h1 style="margin-bottom:var(--sp-4)">Checkout</h1>
+  <div class="checkout-stepper">
+    <span class="step done">1. Direccion</span>
+    <span class="step done">2. Envio</span>
+    <span class="step active">3. Pago y confirmacion</span>
+  </div>
+  <div class="checkout-layout">
+    <div class="checkout-form">
+      <div class="checkout-section">
+        <h2>Confirmar pedido</h2>
+        <div class="review-section" style="margin-bottom:var(--sp-4)">
+          <h3 style="font-size:15px;font-weight:600;margin-bottom:var(--sp-2)">Productos</h3>
+          <% it.items.forEach(function(item) { %>
+            <div class="summary-item" style="display:grid;grid-template-columns:1fr auto auto;gap:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--border-muted)">
+              <div>
+                <strong style="font-weight:500"><%= item.productName ?? 'Producto' %></strong>
+                <% if (item.variantLabel) { %><br><small style="color:var(--text-muted)"><%= item.variantLabel %></small><% } %>
+              </div>
+              <div style="color:var(--text-muted)">x<%= item.quantity %></div>
+              <div style="font-weight:500">$<%= ((item.unitPriceCents * item.quantity) / 100).toLocaleString() %></div>
+            </div>
+          <% }) %>
+        </div>
+        <div class="review-section" style="background:var(--paper-white);border:1px solid rgba(255,255,255,0.62);border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);padding:var(--sp-4);margin-bottom:var(--sp-4)">
+          <h3 style="font-size:15px;font-weight:600;margin-bottom:var(--sp-2)">Envio a</h3>
+          <p style="margin:0"><%= it.address.line1 %><% if (it.address.line2) { %>, <%= it.address.line2 %><% } %></p>
+          <p style="margin:0;color:var(--text-muted)"><%= it.address.city %>, <%= it.address.state %> <%= it.address.postalCode %></p>
+          <p style="margin:var(--sp-2) 0 0;font-size:13px"><%= it.shippingName %> — <%= it.shippingDays %> dias habiles</p>
+        </div>
+        <form method="POST" action="/checkout/confirmar">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <input type="hidden" name="checkoutId" value="<%= it.checkoutId %>">
+          <div class="review-totals" style="background:var(--paper-white);border:1px solid rgba(255,255,255,0.62);border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);padding:var(--sp-4);margin-bottom:var(--sp-4)">
+            <p style="margin:0">Subtotal: $<%= (it.subtotal / 100).toLocaleString() %></p>
+            <% if (it.discountCents > 0) { %>
+              <p class="discount" style="color:var(--sage);margin:var(--sp-1) 0">Descuento: -$<%= (it.discountCents / 100).toLocaleString() %></p>
+            <% } %>
+            <p style="margin:var(--sp-1) 0">Envio: <% if (it.shippingCents === 0) { %><span class="chip" style="background:var(--sage);color:white">GRATIS</span><% } else { %>$<%= (it.shippingCents / 100).toLocaleString() %><% } %></p>
+            <p style="margin:var(--sp-1) 0"><%= it.taxName %>: $<%= (it.taxCents / 100).toLocaleString() %></p>
+            <p class="total" style="font-size:18px;margin:var(--sp-3) 0 0;padding-top:var(--sp-3);border-top:1px solid var(--border-muted)"><strong>Total: $<%= (it.totalCents / 100).toLocaleString() %></strong></p>
+          </div>
+          <p class="legal" style="font-size:12px;color:var(--text-muted);margin-bottom:var(--sp-3)">Al confirmar, aceptas nuestros Terminos y Condiciones.</p>
+          <div style="display:flex;gap:var(--sp-3)">
+            <button type="submit" class="btn btn-primary btn-lg">Confirmar y pagar</button>
+            <a href="/checkout/envio" class="btn btn-ghost">Volver</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

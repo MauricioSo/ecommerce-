@@ -1,0 +1,346 @@
+<% const c = it.cockpit; %>
+
+<div class="admin-detail-header">
+  <h1>
+    <%= c.customer.firstName ?? '' %> <%= c.customer.lastName ?? '' %>
+    <small class="text-muted">(<%= c.customer.email %>)</small>
+  </h1>
+  <% if (c.profile) { %>
+  <span class="badge badge-<%= c.profile.status %>"><%= c.profile.status %></span>
+  <% } else { %>
+  <span class="badge">new</span>
+  <% } %>
+  <div class="admin-detail-actions">
+    <form action="/admin/crm/customers/<%= c.customer.id %>/status" method="post" style="display:inline;">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <select name="status" onchange="this.form.submit()" style="padding:0.25rem;">
+        <option value="new" <% if (c.profile?.status === 'new') { %>selected<% } %>>New</option>
+        <option value="active" <% if (c.profile?.status === 'active') { %>selected<% } %>>Active</option>
+        <option value="vip" <% if (c.profile?.status === 'vip') { %>selected<% } %>>VIP</option>
+        <option value="at_risk" <% if (c.profile?.status === 'at_risk') { %>selected<% } %>>At Risk</option>
+        <option value="blocked" <% if (c.profile?.status === 'blocked') { %>selected<% } %>>Blocked</option>
+      </select>
+    </form>
+  </div>
+</div>
+
+<div class="order-detail-grid">
+  <div class="order-detail-main">
+
+    <div class="checkout-section">
+      <h2>KPIs</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;">
+        <div class="stat-card">
+          <div class="stat-label">Total Orders</div>
+          <div class="stat-value"><%= c.summary.totalOrders %></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Spent</div>
+          <div class="stat-value">$<%= (c.summary.totalSpentCents / 100).toFixed(2) %></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg Order Value</div>
+          <div class="stat-value">$<%= (c.summary.averageOrderValueCents / 100).toFixed(2) %></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Last Order</div>
+          <div class="stat-value"><%= c.summary.lastOrderDate ? new Date(c.summary.lastOrderDate).toLocaleDateString() : 'Never' %></div>
+        </div>
+      </div>
+    </div>
+
+    <% if (c.activeShipments.length > 0 || c.activeReturns.length > 0 || c.openTasks.length > 0) { %>
+    <div class="checkout-section">
+      <h2>Alerts</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+        <% for (const s of c.activeShipments) { %>
+        <span class="badge badge-warning">Shipment: <%= s.status %> (<%= s.carrier ?? 'N/A' %>)</span>
+        <% } %>
+        <% for (const r of c.activeReturns) { %>
+        <span class="badge badge-warning">Return: <%= r.status %></span>
+        <% } %>
+        <% for (const t of c.openTasks) { %>
+        <span class="badge badge-<%= t.priority === 'urgent' ? 'danger' : 'warning' %>">Task: <%= t.title %></span>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+
+    <div class="checkout-section">
+      <h2>Recent Orders</h2>
+      <% if (c.recentOrders.length === 0) { %>
+      <p class="text-muted">No orders yet.</p>
+      <% } else { %>
+      <table class="admin-table">
+        <thead><tr><th>Order</th><th>Status</th><th>Total</th><th>Date</th></tr></thead>
+        <tbody>
+          <% for (const o of c.recentOrders) { %>
+          <tr>
+            <td><a href="/admin/orders/<%= o.id %>"><code><%= o.id.substring(0, 8) %></code></a></td>
+            <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
+            <td>$<%= (o.totalCents / 100).toFixed(2) %></td>
+            <td><%= new Date(o.createdAt).toLocaleDateString() %></td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+
+    <div class="checkout-section">
+      <h2>Active Shipments</h2>
+      <% if (c.activeShipments.length === 0) { %>
+      <p class="text-muted">No active shipments.</p>
+      <% } else { %>
+      <table class="admin-table">
+        <thead><tr><th>ID</th><th>Status</th><th>Carrier</th><th>Tracking</th></tr></thead>
+        <tbody>
+          <% for (const s of c.activeShipments) { %>
+          <tr>
+            <td><code><%= s.id.substring(0, 8) %></code></td>
+            <td><span class="badge badge-<%= s.status %>"><%= s.status %></span></td>
+            <td><%= s.carrier ?? '-' %></td>
+            <td><%= s.trackingCode ?? '-' %></td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+
+    <div class="checkout-section">
+      <h2>Addresses</h2>
+      <% if (c.addresses.length === 0) { %>
+      <p class="text-muted">No addresses on file.</p>
+      <% } else { %>
+      <div style="display:grid;gap:0.5rem;">
+        <% for (const addr of c.addresses) { %>
+        <div style="padding:0.5rem;border:1px solid #ddd;border-radius:4px;">
+          <% if (addr.label) { %><strong><%= addr.label %></strong><br><% } %>
+          <%= addr.line1 %><% if (addr.line2) { %>, <%= addr.line2 %><% } %><br>
+          <%= addr.city %>, <%= addr.state %> <%= addr.postalCode %>, <%= addr.country %><br>
+          <% if (addr.phone) { %><%= addr.phone %><% } %>
+          <% if (addr.isDefault) { %> <span class="badge badge-success">Default</span><% } %>
+        </div>
+        <% } %>
+      </div>
+      <% } %>
+    </div>
+
+    <div class="checkout-section">
+      <h2>Notes</h2>
+      <form action="/admin/crm/customers/<%= c.customer.id %>/notes" method="post" style="margin-bottom:1rem;">
+        <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+        <textarea name="body" placeholder="Add a note..." required rows="3" style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:4px;margin-bottom:0.5rem;"></textarea>
+        <select name="visibility" style="margin-bottom:0.5rem;">
+          <option value="internal">Internal</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Add Note</button>
+      </form>
+      <% if (c.notes.length === 0) { %>
+      <p class="text-muted">No notes yet.</p>
+      <% } else { %>
+      <div style="display:grid;gap:0.5rem;">
+        <% for (const note of c.notes) { %>
+        <div style="padding:0.5rem;border-left:3px solid #007bff;background:#f8f9fa;">
+          <div style="font-size:0.85rem;color:#666;">
+            <%= new Date(note.createdAt).toLocaleString() %>
+            <% if (note.visibility === 'internal') { %> <span class="badge badge-secondary">Internal</span><% } %>
+          </div>
+          <div style="white-space:pre-wrap;"><%= note.body %></div>
+        </div>
+        <% } %>
+      </div>
+      <% } %>
+    </div>
+
+    <div class="checkout-section">
+      <h2>Tasks</h2>
+      <form action="/admin/crm/customers/<%= c.customer.id %>/tasks" method="post" style="margin-bottom:1rem;">
+        <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <select name="type" required style="flex:1;min-width:120px;">
+            <option value="follow_up">Follow Up</option>
+            <option value="payment_issue">Payment Issue</option>
+            <option value="shipping_issue">Shipping Issue</option>
+            <option value="return_issue">Return Issue</option>
+            <option value="custom">Custom</option>
+          </select>
+          <input type="text" name="title" placeholder="Task title" required style="flex:2;min-width:200px;">
+          <select name="priority" style="flex:1;min-width:100px;">
+            <option value="low">Low</option>
+            <option value="normal" selected>Normal</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+          <input type="date" name="dueAt" style="flex:1;">
+          <button type="submit" class="btn btn-primary btn-sm">Create Task</button>
+        </div>
+      </form>
+      <% if (c.openTasks.length === 0) { %>
+      <p class="text-muted">No open tasks.</p>
+      <% } else { %>
+      <table class="admin-table">
+        <thead><tr><th>Title</th><th>Type</th><th>Priority</th><th>Due</th><th>Action</th></tr></thead>
+        <tbody>
+          <% for (const t of c.openTasks) { %>
+          <tr>
+            <td><%= t.title %></td>
+            <td><span class="badge badge-secondary"><%= t.type %></span></td>
+            <td><span class="badge badge-<%= t.priority === 'urgent' ? 'danger' : 'warning' %>"><%= t.priority %></span></td>
+            <td><%= t.dueAt ? new Date(t.dueAt).toLocaleDateString() : '-' %></td>
+            <td>
+              <form action="/admin/crm/tasks/<%= t.id %>/status" method="post" style="display:inline;">
+                <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+                <input type="hidden" name="status" value="done">
+                <button type="submit" class="btn btn-sm btn-success">Done</button>
+              </form>
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+
+    <div class="checkout-section">
+      <h2>Interactions</h2>
+      <form action="/admin/crm/customers/<%= c.customer.id %>/interactions" method="post" style="margin-bottom:1rem;">
+        <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <select name="channel" required style="flex:1;min-width:100px;">
+            <option value="phone">Phone</option>
+            <option value="email">Email</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="internal">Internal</option>
+            <option value="other">Other</option>
+          </select>
+          <select name="direction" style="flex:1;min-width:100px;">
+            <option value="inbound">Inbound</option>
+            <option value="outbound">Outbound</option>
+            <option value="internal">Internal</option>
+          </select>
+        </div>
+        <textarea name="summary" placeholder="Interaction summary..." required rows="2" style="width:100%;margin-top:0.5rem;padding:0.5rem;border:1px solid #ddd;border-radius:4px;"></textarea>
+        <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Record Interaction</button>
+      </form>
+      <% if (c.interactions.length === 0) { %>
+      <p class="text-muted">No interactions recorded.</p>
+      <% } else { %>
+      <div style="display:grid;gap:0.5rem;">
+        <% for (const i of c.interactions) { %>
+        <div style="padding:0.5rem;border-left:3px solid #28a745;background:#f8f9fa;">
+          <div style="font-size:0.85rem;color:#666;">
+            <span class="badge badge-secondary"><%= i.channel %></span>
+            <span class="badge badge-info"><%= i.direction %></span>
+            <%= new Date(i.createdAt).toLocaleString() %>
+          </div>
+          <div style="white-space:pre-wrap;"><%= i.summary %></div>
+        </div>
+        <% } %>
+      </div>
+      <% } %>
+    </div>
+
+    <div class="checkout-section">
+      <h2>Timeline</h2>
+      <% if (c.timeline.length === 0) { %>
+      <p class="text-muted">No events recorded.</p>
+      <% } else { %>
+      <div class="timeline">
+        <% for (const evt of c.timeline) { %>
+        <div class="timeline-entry">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <strong><%= evt.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %></strong>
+            <span class="text-muted" style="margin-left:0.5rem;"><%= new Date(evt.date).toLocaleString() %></span>
+            <% if (evt.data.payload) { %>
+            <div class="timeline-payload"><%= JSON.stringify(evt.data.payload) %></div>
+            <% } %>
+          </div>
+        </div>
+        <% } %>
+      </div>
+      <% } %>
+    </div>
+
+  </div>
+
+  <div class="order-detail-sidebar">
+    <div class="order-info-card">
+      <h3>Quick Actions</h3>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;">
+        <form action="/admin/crm/customers/<%= c.customer.id %>/notes" method="post">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <input type="hidden" name="body" value="Quick note">
+          <button type="submit" class="btn btn-sm btn-block">Add Quick Note</button>
+        </form>
+        <form action="/admin/crm/customers/<%= c.customer.id %>/tasks" method="post">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <input type="hidden" name="type" value="follow_up">
+          <input type="hidden" name="title" value="Follow up with customer">
+          <button type="submit" class="btn btn-sm btn-block">Create Follow-up Task</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="order-info-card">
+      <h3>Tags</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-bottom:0.5rem;">
+        <% for (const ct of c.tags) { %>
+        <span class="badge" style="background-color:<%= ct.tag.color ?? '#666' %>;color:#fff;">
+          <%= ct.tag.name %>
+          <form action="/admin/crm/customers/<%= c.customer.id %>/tags/remove" method="post" style="display:inline;margin-left:0.25rem;">
+            <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+            <input type="hidden" name="tagId" value="<%= ct.tagId %>">
+            <button type="submit" style="background:none;border:none;color:inherit;padding:0;cursor:pointer;font-size:0.8em;">&times;</button>
+          </form>
+        </span>
+        <% } %>
+        <% if (c.tags.length === 0) { %><span class="text-muted">No tags</span><% } %>
+      </div>
+      <form action="/admin/crm/customers/<%= c.customer.id %>/tags" method="post" style="display:flex;gap:0.25rem;">
+        <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+        <select name="tagId" required style="flex:1;font-size:0.85rem;">
+          <option value="">Select tag...</option>
+          <% for (const tag of it.tags) { %>
+          <option value="<%= tag.id %>"><%= tag.name %></option>
+          <% } %>
+        </select>
+        <button type="submit" class="btn btn-sm">Add</button>
+      </form>
+      <details style="margin-top:0.5rem;">
+        <summary style="font-size:0.8rem;cursor:pointer;">Create new tag</summary>
+        <form action="/admin/crm/tags" method="post" style="display:flex;gap:0.25rem;margin-top:0.25rem;">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <input type="text" name="name" placeholder="Tag name" required style="flex:2;font-size:0.8rem;padding:0.2rem;">
+          <input type="text" name="color" placeholder="#hex" style="flex:1;font-size:0.8rem;padding:0.2rem;">
+          <button type="submit" class="btn btn-sm">Create</button>
+        </form>
+      </details>
+    </div>
+
+    <div class="order-info-card">
+      <h3>Customer Info</h3>
+      <dl>
+        <dt>Email</dt>
+        <dd><%= c.customer.email %></dd>
+        <dt>Phone</dt>
+        <dd><%= c.customer.phone ?? 'N/A' %></dd>
+        <dt>Country</dt>
+        <dd><%= c.customer.countryCode ?? 'N/A' %></dd>
+        <dt>Customer Since</dt>
+        <dd><%= new Date(c.customer.createdAt).toLocaleDateString() %></dd>
+      </dl>
+    </div>
+
+    <div class="order-info-card">
+      <h3>Links</h3>
+      <% if (c.recentOrders.length > 0) { %>
+      <a href="/admin/orders/<%= c.recentOrders[0].id %>" class="btn btn-sm btn-block">View Last Order</a>
+      <% } %>
+    </div>
+  </div>
+</div>

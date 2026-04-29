@@ -1,0 +1,44 @@
+<div class="account-container">
+  <h1>Mi cuenta</h1>
+  <div class="account-section">
+    <div class="account-welcome" style="margin-bottom:var(--sp-6)">
+      <h2>Hola, <%= it.customerName %></h2>
+    </div>
+    <div class="account-cards">
+      <a href="/cuenta/pedidos" class="account-card">
+        <h3>Mis pedidos</h3>
+        <p>Ver historial y estado de tus pedidos</p>
+      </a>
+      <a href="/cuenta/direcciones" class="account-card">
+        <h3>Mis direcciones</h3>
+        <p>Gestionar direcciones de envio</p>
+      </a>
+      <a href="/cuenta/favoritos" class="account-card">
+        <h3>Mis favoritos</h3>
+        <p>Productos que te gustan</p>
+      </a>
+      <a href="/cuenta/perfil" class="account-card">
+        <h3>Mi perfil</h3>
+        <p>Editar datos personales</p>
+      </a>
+    </div>
+    <% if (it.recentOrders && it.recentOrders.length > 0) { %>
+      <div class="account-section" style="margin-top:var(--sp-6)">
+        <h2>Ultimos pedidos</h2>
+        <div class="orders-list">
+          <% it.recentOrders.forEach(function(order) { %>
+            <div class="order-card">
+              <div class="order-header">
+                <span class="order-token"><%= order.publicToken.slice(0, 8) %></span>
+                <span class="order-date"><%= new Date(order.createdAt).toLocaleDateString('es') %></span>
+                <span class="order-status status-<%= order.status %>"><%= order.status.replace(/_/g, ' ') %></span>
+                <span class="order-total">$<%= (order.totalCents / 100).toLocaleString() %></span>
+              </div>
+              <a href="/cuenta/pedidos/<%= order.id %>" class="btn btn-secondary btn-sm">Ver detalle</a>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>

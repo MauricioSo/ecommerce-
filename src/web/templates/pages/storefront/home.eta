@@ -1,0 +1,57 @@
+<section class="hero">
+  <h1>Bienvenido a nuestra tienda</h1>
+  <p>Descubre productos de calidad a grandes precios. Envio rapido, devoluciones faciles.</p>
+  <div class="hero-actions">
+    <a href="/search" class="btn btn-primary">Ver todos los productos</a>
+    <% if (it.categories.length > 0) { %>
+    <a href="/categories/<%= it.categories[0].slug %>" class="btn btn-secondary"><%= it.categories[0].name %></a>
+    <% } %>
+  </div>
+</section>
+
+<% if (it.categories.length > 0) { %>
+<section class="section">
+  <h2>Categorias</h2>
+  <div class="category-grid">
+    <% for (const cat of it.categories) { %>
+    <a href="/categories/<%= cat.slug %>" class="category-card">
+      <h3><%= cat.name %></h3>
+      <% if (cat.description) { %><p><%= cat.description %></p><% } %>
+    </a>
+    <% } %>
+  </div>
+</section>
+<% } %>
+
+<% if (it.products.length > 0) { %>
+<section class="section">
+  <h2>Productos destacados</h2>
+  <div class="product-grid">
+    <% for (const p of it.products) { %>
+    <a href="/products/<%= p.slug %>" class="product-card">
+      <div class="product-card-image">
+        <% if (p.baseImage) { %>
+        <img src="<%= p.baseImage %>" alt="<%= p.name %>" loading="lazy">
+        <% } else { %>
+        <div class="product-card-placeholder">Sin imagen</div>
+        <% } %>
+      </div>
+      <div class="product-card-body">
+        <h3><%= p.name %></h3>
+        <% if (p.categoryName) { %>
+        <p class="product-card-category"><%= p.categoryName %></p>
+        <% } %>
+        <div class="product-card-price">
+          <% if (p.minPriceCents > 0) { %>
+          <span class="price-current">$<%= (p.minPriceCents / 100).toLocaleString('es') %></span>
+          <% if (p.maxPriceCents > p.minPriceCents) { %>
+          <span class="price-range">— $<%= (p.maxPriceCents / 100).toLocaleString('es') %></span>
+          <% } %>
+          <% } %>
+        </div>
+      </div>
+    </a>
+    <% } %>
+  </div>
+</section>
+<% } %>

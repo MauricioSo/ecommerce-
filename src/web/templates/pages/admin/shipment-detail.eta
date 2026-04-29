@@ -1,0 +1,85 @@
+<% if (it.shipment) { %>
+<div class="checkout-section">
+  <h2>Shipment</h2>
+  <table class="cart-table">
+    <tbody>
+      <tr><td><strong>ID</strong></td><td><code><%= it.shipment.id %></code></td></tr>
+      <tr><td><strong>Status</strong></td><td><span class="badge badge-<%= it.shipment.status %>"><%= it.shipment.status %></span></td></tr>
+      <tr><td><strong>Carrier</strong></td><td><%= it.shipment.carrier || 'Not assigned' %></td></tr>
+      <tr><td><strong>Tracking</strong></td><td><%= it.shipment.trackingCode || 'Not assigned' %></td></tr>
+      <tr><td><strong>Tracking URL</strong></td><td><%= it.shipment.trackingUrl || '-' %></td></tr>
+      <tr><td><strong>Est. Delivery</strong></td><td><%= it.shipment.estimatedDeliveryDate || '-' %></td></tr>
+    </tbody>
+  </table>
+
+  <form action="/admin/fulfillment/shipments/<%= it.shipment.id %>/tracking" method="POST" class="form-actions" style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+    <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+    <input type="text" name="trackingCode" placeholder="Tracking code" value="<%= it.shipment.trackingCode || '' %>" class="search-input" style="flex:1;min-width:150px;">
+    <input type="text" name="trackingUrl" placeholder="Tracking URL" value="<%= it.shipment.trackingUrl || '' %>" class="search-input" style="flex:1;min-width:150px;">
+    <input type="text" name="carrier" placeholder="Carrier" value="<%= it.shipment.carrier || '' %>" class="search-input" style="flex:1;min-width:100px;">
+    <input type="date" name="estimatedDeliveryDate" value="<%= it.shipment.estimatedDeliveryDate || '' %>" class="search-input" style="flex:1;min-width:130px;">
+    <button type="submit" class="btn btn-primary">Update</button>
+  </form>
+
+  <div style="margin-top:1rem">
+    <strong>Update Status:</strong>
+    <form action="/admin/fulfillment/shipments/<%= it.shipment.id %>/status" method="POST" style="display:inline">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <input type="hidden" name="targetStatus" value="picked_up">
+      <button type="submit" class="btn btn-secondary" style="margin:0.25rem">Pick Up</button>
+    </form>
+    <form action="/admin/fulfillment/shipments/<%= it.shipment.id %>/status" method="POST" style="display:inline">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <input type="hidden" name="targetStatus" value="in_transit">
+      <button type="submit" class="btn btn-secondary" style="margin:0.25rem">In Transit</button>
+    </form>
+    <form action="/admin/fulfillment/shipments/<%= it.shipment.id %>/status" method="POST" style="display:inline">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <input type="hidden" name="targetStatus" value="out_for_delivery">
+      <button type="submit" class="btn btn-secondary" style="margin:0.25rem">Out for Delivery</button>
+    </form>
+    <form action="/admin/fulfillment/shipments/<%= it.shipment.id %>/status" method="POST" style="display:inline">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <input type="hidden" name="targetStatus" value="delivered">
+      <button type="submit" class="btn btn-secondary" style="margin:0.25rem">Delivered</button>
+    </form>
+    <form action="/admin/fulfillment/shipments/<%= it.shipment.id %>/status" method="POST" style="display:inline">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <input type="hidden" name="targetStatus" value="cancelled">
+      <button type="submit" class="btn btn-danger" style="margin:0.25rem">Cancel</button>
+    </form>
+  </div>
+
+  <h3 style="margin-top:1.5rem;">Shipment Timeline</h3>
+  <% if (!it.events || it.events.length === 0) { %>
+  <p class="text-muted">No events recorded.</p>
+  <% } else { %>
+  <div class="timeline">
+    <% for (const evt of it.events) { %>
+    <div class="timeline-entry">
+      <div class="timeline-dot"></div>
+      <div class="timeline-content">
+        <strong><%= evt.title %></strong>
+        <span class="badge badge-<%= evt.status %>" style="margin-left:0.5rem;"><%= evt.status %></span>
+        <span class="text-muted" style="margin-left:0.5rem;"><%= new Date(evt.occurredAt).toLocaleString() %></span>
+        <% if (evt.description) { %>
+        <div class="timeline-payload"><%= evt.description %></div>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+  </div>
+  <% } %>
+</div>
+<% } else { %>
+<div class="checkout-section">
+  <h2>Shipment</h2>
+  <p>No shipment created yet.</p>
+  <form action="/admin/fulfillment/shipments" method="POST">
+    <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+    <input type="hidden" name="orderId" value="<%= it.orderId %>">
+    <input type="text" name="carrier" placeholder="Carrier (optional)" class="search-input" style="width:200px;margin-right:0.5rem">
+    <button type="submit" class="btn btn-primary">Create Shipment</button>
+  </form>
+</div>
+<% } %>

@@ -1,0 +1,46 @@
+<h1 style="margin-bottom:var(--sp-4)">Carrito</h1>
+<% if (it.items.length === 0) { %>
+  <div class="empty-state">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    <p>Tu carrito esta vacio.</p>
+    <a href="/" class="btn btn-secondary">Continuar comprando</a>
+  </div>
+<% } else { %>
+<table class="cart-table">
+  <thead>
+    <tr><th>Producto</th><th>Variante</th><th>Precio</th><th>Cant</th><th>Total</th><th></th></tr>
+  </thead>
+  <tbody>
+    <% for (const item of it.items) { %>
+    <tr>
+      <td><a href="/products/<%= item.productSlug ?? '#' %>" style="font-weight:500"><%= item.productName ?? 'Unknown' %></a></td>
+      <td style="color:var(--text-muted)"><%= item.variantLabel ?? '---' %></td>
+      <td>$<%= (item.unitPriceCents / 100).toFixed(2) %></td>
+      <td>
+        <form action="/cart/update" method="POST" class="inline-form">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <input type="hidden" name="itemId" value="<%= item.id %>">
+          <input type="number" name="quantity" value="<%= item.quantity %>" min="1" max="99" class="qty-input">
+          <button type="submit" class="btn btn-sm btn-secondary">Actualizar</button>
+        </form>
+      </td>
+      <td><strong>$<%= (item.lineTotal / 100).toFixed(2) %></strong></td>
+      <td>
+        <form action="/cart/remove" method="POST" class="inline-form">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <input type="hidden" name="itemId" value="<%= item.id %>">
+          <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+        </form>
+      </td>
+    </tr>
+    <% } %>
+  </tbody>
+  <tfoot>
+    <tr><td colspan="4" class="text-right"><strong>Total:</strong></td><td colspan="2"><strong class="price-current" style="font-size:18px">$<%= (it.total / 100).toFixed(2) %></strong></td></tr>
+  </tfoot>
+</table>
+<div class="cart-actions">
+  <a href="/" class="btn btn-secondary">Continuar comprando</a>
+  <a href="/checkout" class="btn btn-primary">Ir al checkout</a>
+</div>
+<% } %>

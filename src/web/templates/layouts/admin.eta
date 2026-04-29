@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= it.title ?? "Admin" %> - Admin Panel</title>
+  <meta name="csrf-token" content="<%= it.csrfToken %>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/admin.css">
+  <script src="/static/js/main.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body class="admin-layout">
+  <aside class="admin-sidebar">
+    <h2 style="font-family:var(--font-display)">Admin</h2>
+    <nav>
+      <a href="/admin">Dashboard</a>
+      <a href="/admin/orders">Pedidos</a>
+      <a href="/admin/products">Productos</a>
+      <a href="/admin/categories">Categorias</a>
+      <a href="/admin/inventory">Inventario</a>
+      <a href="/admin/promotions">Promociones</a>
+      <a href="/admin/payments">Pagos</a>
+    </nav>
+    <form action="/admin/logout" method="post" style="margin-top:auto;padding-top:1rem;">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <button type="submit" class="btn btn-sm" style="width:100%;background:var(--paper-white);color:var(--ink-black)">Cerrar sesion</button>
+    </form>
+  </aside>
+  <main class="admin-content">
+    <%~ it.body %>
+  </main>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<div class="order-status-page" style="margin-top:var(--sp-4)">
+  <h1 style="margin-bottom:var(--sp-4)">Estado del pedido</h1>
+  <p style="margin-bottom:var(--sp-4)">Pedido ID: <code><%= it.order.id.substring(0, 8) %></code></p>
+
+  <div class="order-status-card" style="display:flex;gap:var(--sp-3);flex-wrap:wrap;margin-bottom:var(--sp-6)">
+    <div class="order-status status-<%= it.order.status %>" style="padding:var(--sp-2) var(--sp-3);border-radius:var(--radius-md);font-size:14px;font-weight:500">
+      Pedido: <%= it.order.status.replace(/_/g, ' ') %>
+    </div>
+    <% if (it.trackingInfo && it.trackingInfo.shipment) { %>
+    <div class="order-status status-<%= it.trackingInfo.shipment.status %>" style="padding:var(--sp-2) var(--sp-3);border-radius:var(--radius-md);font-size:14px;font-weight:500">
+      Envio: <%= it.trackingInfo.shipment.statusLabel %>
+    </div>
+    <% } %>
+    <div class="order-status status-<%= it.latestPayment ? it.latestPayment.status : 'none' %>" style="padding:var(--sp-2) var(--sp-3);border-radius:var(--radius-md);font-size:14px;font-weight:500">
+      Pago: <%= it.latestPayment ? it.latestPayment.status.replace(/_/g, ' ') : 'Sin intento' %>
+    </div>
+  </div>
+
+  <% if (it.trackingInfo && it.trackingInfo.shipment) { %>
+  <div class="checkout-section" style="margin-bottom:var(--sp-6)">
+    <h2 style="font-size:18px;margin-bottom:var(--sp-3)">Seguimiento del envio</h2>
+    <div class="shipment-info" style="background:var(--paper-white);border:1px solid rgba(255,255,255,0.62);border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);padding:var(--sp-4)">
+      <% if (it.trackingInfo.shipment.carrier) { %>
+      <div class="shipment-row" style="margin-bottom:var(--sp-2)"><strong>Courier:</strong> <%= it.trackingInfo.shipment.carrier %></div>
+      <% } %>
+      <% if (it.trackingInfo.shipment.trackingCode) { %>
+      <div class="shipment-row" style="margin-bottom:var(--sp-2)"><strong>Tracking:</strong> <%= it.trackingInfo.shipment.trackingCode %></div>
+      <% } %>
+      <% if (it.trackingInfo.shipment.trackingUrl) { %>
+      <div class="shipment-row" style="margin-bottom:var(--sp-2)"><a href="<%= it.trackingInfo.shipment.trackingUrl %>" target="_blank" class="btn btn-secondary btn-sm">Rastrear paquete</a></div>
+      <% } %>
+      <% if (it.trackingInfo.shipment.estimatedDeliveryDate) { %>
+      <div class="shipment-row"><strong>Entrega estimada:</strong> <%= it.trackingInfo.shipment.estimatedDeliveryDate %></div>
+      <% } %>
+    </div>
+  </div>
+  <% } %>
+
+  <% if (it.trackingInfo && it.trackingInfo.shipment && it.trackingInfo.shipment.timeline.length > 0) { %>
+  <div class="checkout-section" style="margin-bottom:var(--sp-6)">
+    <h2 style="font-size:18px;margin-bottom:var(--sp-3)">Historial del envio</h2>
+    <div class="timeline">
+      <% for (const event of it.trackingInfo.shipment.timeline) { %>
+      <div class="timeline-entry" style="display:flex;gap:var(--sp-3);margin-bottom:var(--sp-3)">
+        <div class="timeline-dot" style="width:10px;height:10px;border-radius:50%;background:var(--sage);margin-top:5px;flex-shrink:0"></div>
+        <div class="timeline-content">
+          <strong><%= event.title %></strong>
+          <span style="color:var(--text-muted);margin-left:var(--sp-2);font-size:13px"><%= new Date(event.occurredAt).toLocaleString() %></span>
+          <% if (event.description) { %>
+          <div style="color:var(--text-muted);font-size:13px;margin-top:var(--sp-1)"><%= event.description %></div>
+          <% } %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <% } else if (it.trackingInfo && !it.trackingInfo.shipment && (it.order.status === 'confirmed' || it.order.status === 'processing')) { %>
+  <div class="checkout-section" style="margin-bottom:var(--sp-6)">
+    <h2 style="font-size:18px;margin-bottom:var(--sp-3)">Envio</h2>
+    <p style="color:var(--text-muted)">Tu pedido esta confirmado. Aun estamos preparando el envio.</p>
+  </div>
+  <% } %>
+
+  <div class="checkout-section" style="margin-bottom:var(--sp-6)">
+    <h2 style="font-size:18px;margin-bottom:var(--sp-3)">Productos</h2>
+    <table class="cart-table" style="width:100%">
+      <thead><tr><th style="text-align:left;padding:var(--sp-2)">Producto</th><th style="padding:var(--sp-2)">Cant</th><th style="padding:var(--sp-2)">Precio</th><th style="padding:var(--sp-2)">Total</th></tr></thead>
+      <tbody>
+        <% for (const item of it.order.items) { %>
+        <tr style="border-bottom:1px solid var(--border-muted)">
+          <td style="padding:var(--sp-2)"><%= item.productName %><% if (item.variantLabel) { %> — <%= item.variantLabel %><% } %></td>
+          <td style="padding:var(--sp-2);text-align:center"><%= item.quantity %></td>
+          <td style="padding:var(--sp-2);text-align:right">$<%= (item.unitPriceCents / 100).toFixed(2) %></td>
+          <td style="padding:var(--sp-2);text-align:right;font-weight:500">$<%= (item.totalPriceCents / 100).toFixed(2) %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="checkout-section" style="margin-bottom:var(--sp-6)">
+    <h2 style="font-size:18px;margin-bottom:var(--sp-3)">Resumen</h2>
+    <div style="background:var(--paper-white);border:1px solid rgba(255,255,255,0.62);border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);padding:var(--sp-4);max-width:400px">
+      <div class="summary-row" style="display:flex;justify-content:space-between;padding:var(--sp-1) 0"><span>Subtotal</span><span>$<%= (it.order.subtotalCents / 100).toFixed(2) %></span></div>
+      <% if (it.order.discountCents > 0) { %>
+      <div class="summary-row" style="display:flex;justify-content:space-between;padding:var(--sp-1) 0;color:var(--sage)"><span>Descuento</span><span>-$<%= (it.order.discountCents / 100).toFixed(2) %></span></div>
+      <% } %>
+      <div class="summary-row" style="display:flex;justify-content:space-between;padding:var(--sp-1) 0"><span>Envio</span><span><%= it.order.shippingCostCents === 0 ? 'Gratis' : `$${(it.order.shippingCostCents / 100).toFixed(2)}` %></span></div>
+      <div class="summary-row" style="display:flex;justify-content:space-between;padding:var(--sp-1) 0"><span>Impuestos</span><span>$<%= (it.order.taxCents / 100).toFixed(2) %></span></div>
+      <div class="summary-row summary-total" style="display:flex;justify-content:space-between;padding:var(--sp-3) 0;border-top:1px solid var(--border-muted);margin-top:var(--sp-2)"><span style="font-size:16px;font-weight:600">Total</span><span style="font-size:16px;font-weight:600">$<%= (it.order.totalCents / 100).toFixed(2) %></span></div>
+    </div>
+  </div>
+
+  <% if (it.order.status === 'pending' && (!it.latestPayment || it.latestPayment.status === 'failed' || it.latestPayment.status === 'rejected')) { %>
+  <div class="checkout-section" style="margin-bottom:var(--sp-6)">
+    <form action="/orders/<%= it.order.id %>/retry-payment" method="POST">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <input type="hidden" name="token" value="<%= it.orderPublicToken %>">
+      <button type="submit" class="btn btn-primary btn-lg">Reintentar pago</button>
+    </form>
+  </div>
+  <% } %>
+
+  <% if (it.order.status === 'confirmed' || it.order.status === 'processing' || it.order.status === 'shipped' || it.order.status === 'delivered') { %>
+  <div class="checkout-section" style="margin-bottom:var(--sp-6)">
+    <h2 style="font-size:18px;margin-bottom:var(--sp-3)">Solicitar devolucion</h2>
+    <form action="/orders/<%= it.order.id %>/returns" method="POST" style="max-width:500px">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <input type="hidden" name="token" value="<%= it.orderPublicToken %>">
+      <div class="form-group">
+        <label for="orderItemId" style="font-size:14px;font-weight:500;display:block;margin-bottom:var(--sp-1)">Producto</label>
+        <select name="orderItemId" id="orderItemId" required style="width:100%;padding:var(--sp-2);border:1px solid var(--border-muted);border-radius:var(--radius-md);background:var(--paper-white)">
+          <% for (const item of it.order.items) { %>
+          <option value="<%= item.id %>"><%= item.productName %><% if (item.variantLabel) { %> — <%= item.variantLabel %><% } %> ($<%= (item.totalPriceCents / 100).toFixed(2) %>)</option>
+          <% } %>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:var(--sp-3)">
+        <label for="reason" style="font-size:14px;font-weight:500;display:block;margin-bottom:var(--sp-1)">Razon</label>
+        <textarea name="reason" id="reason" required placeholder="Describe por que quieres devolver este producto" rows="3" style="width:100%;padding:var(--sp-2);border:1px solid var(--border-muted);border-radius:var(--radius-md);background:var(--paper-white)"></textarea>
+      </div>
+      <button type="submit" class="btn btn-secondary" style="margin-top:var(--sp-3)">Enviar solicitud</button>
+    </form>
+  </div>
+  <% } %>
+
+  <% if (it.order.shippingAddress) { %>
+  <div class="checkout-section" style="margin-bottom:var(--sp-6)">
+    <h2 style="font-size:18px;margin-bottom:var(--sp-3)">Direccion de envio</h2>
+    <p style="margin:0"><%= it.order.customerEmail %></p>
+    <p style="margin:0;color:var(--text-muted)">
+      <% const addr = it.order.shippingAddress; %>
+      <%= addr.line1 %><% if (addr.line2) { %>, <%= addr.line2 %><% } %><br>
+      <%= addr.city %>, <%= addr.state %> <%= addr.postalCode %>, <%= addr.country %>
+    </p>
+  </div>
+  <% } %>
+
+  <% if (it.timeline && it.timeline.length > 0) { %>
+  <div class="checkout-section" style="margin-bottom:var(--sp-6)">
+    <h2 style="font-size:18px;margin-bottom:var(--sp-3)">Historial</h2>
+    <div class="timeline">
+      <% for (const event of it.timeline) { %>
+      <div class="timeline-entry" style="display:flex;gap:var(--sp-3);margin-bottom:var(--sp-3)">
+        <div class="timeline-time" style="font-size:13px;color:var(--text-muted);min-width:140px"><%= new Date(event.createdAt).toLocaleString() %></div>
+        <div class="timeline-event" style="font-size:13px;font-weight:500"><%= event.eventType.replace(/_/g, ' ') %></div>
+        <% if (event.payload) { %>
+        <div class="timeline-details" style="font-size:12px;color:var(--text-muted)"><%= JSON.stringify(event.payload) %></div>
+        <% } %>
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <% } %>
+
+  <a href="/" class="btn btn-secondary">Continuar comprando</a>
+</div>

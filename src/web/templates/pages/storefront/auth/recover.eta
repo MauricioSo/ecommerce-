@@ -1,0 +1,18 @@
+<div class="auth-container">
+  <div class="auth-panel">
+    <h1>Recuperar contraseña</h1>
+    <% if (it.success) { %>
+      <div class="alert alert-success">Si el email existe, recibiras instrucciones para restablecer tu contrasena.</div>
+    <% } else { %>
+      <form method="POST" action="/cuenta/recuperar">
+        <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required autocomplete="email">
+        </div>
+        <button type="submit" class="btn btn-primary">Enviar instrucciones</button>
+      </form>
+    <% } %>
+    <p><a href="/cuenta/login">Volver al inicio de sesion</a></p>
+  </div>
+</div>

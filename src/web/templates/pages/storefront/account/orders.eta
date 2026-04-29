@@ -1,0 +1,38 @@
+<div class="account-container">
+  <div class="account-section">
+    <div style="display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-4)">
+      <a href="/cuenta" class="btn btn-ghost">Volver a mi cuenta</a>
+    </div>
+    <h1>Mis pedidos</h1>
+    <% if (it.orders.length === 0) { %>
+      <div class="empty-state">
+        <p>Aun no tienes pedidos.</p>
+        <a href="/" class="btn btn-secondary">Explorar productos</a>
+      </div>
+    <% } else { %>
+      <div class="orders-list">
+        <% it.orders.forEach(function(order) { %>
+          <div class="order-card">
+            <div class="order-header">
+              <span class="order-token"><%= order.publicToken.slice(0, 8) %></span>
+              <span class="order-date"><%= new Date(order.createdAt).toLocaleDateString('es') %></span>
+              <span class="order-status status-<%= order.status %>"><%= order.status.replace(/_/g, ' ') %></span>
+              <span class="order-total">$<%= (order.totalCents / 100).toLocaleString() %></span>
+            </div>
+            <a href="/cuenta/pedidos/<%= order.id %>" class="btn btn-secondary btn-sm">Ver detalle</a>
+          </div>
+        <% }) %>
+      </div>
+      <% if (it.page > 1 || it.hasMore) { %>
+        <div class="pagination">
+          <% if (it.page > 1) { %>
+            <a href="/cuenta/pedidos?page=<%= it.page - 1 %>" class="btn btn-ghost">Anterior</a>
+          <% } %>
+          <% if (it.hasMore) { %>
+            <a href="/cuenta/pedidos?page=<%= it.page + 1 %>" class="btn btn-ghost">Siguiente</a>
+          <% } %>
+        </div>
+      <% } %>
+    <% } %>
+  </div>
+</div>

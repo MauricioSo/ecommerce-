@@ -1,0 +1,33 @@
+<h1>Products</h1>
+<div class="admin-toolbar">
+  <a href="/admin/products/new" class="btn btn-primary">+ New Product</a>
+</div>
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Category</th>
+      <th>Status</th>
+      <th>SKUs</th>
+      <th>Updated</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% for (const p of it.products) { %>
+    <tr>
+      <td><a href="/admin/products/<%= p.id %>"><%= p.name %></a></td>
+      <td><%= p.categoryName ?? "—" %></td>
+      <td><span class="badge badge-<%= p.editorialStatus %>"><%= p.editorialStatus %></span></td>
+      <td><%= p.skuCount %></td>
+      <td><%= new Date(p.updatedAt).toLocaleDateString() %></td>
+      <td>
+        <a href="/admin/products/<%= p.id %>" class="btn btn-sm">Edit</a>
+      </td>
+    </tr>
+    <% } %>
+    <% if (it.products.length === 0) { %>
+    <tr><td colspan="6" class="text-center">No products yet. <a href="/admin/products/new">Create one</a>.</td></tr>
+    <% } %>
+  </tbody>
+</table>

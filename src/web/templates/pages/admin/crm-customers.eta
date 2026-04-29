@@ -1,0 +1,98 @@
+<h1>CRM Customers</h1>
+
+<div class="admin-toolbar">
+  <div class="crm-filters">
+    <form method="get" action="/admin/crm/customers" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+      <input type="text" name="q" value="<%= it.filters.q %>" placeholder="Search email, name, phone..." class="search-input" style="width:200px;">
+      <select name="tag" onchange="this.form.submit()">
+        <option value="">All Tags</option>
+        <% for (const tag of it.tags) { %>
+        <option value="<%= tag.id %>" <% if (it.filters.tag === tag.id) { %>selected<% } %>><%= tag.name %></option>
+        <% } %>
+      </select>
+      <select name="status" onchange="this.form.submit()">
+        <option value="">All Status</option>
+        <option value="new" <% if (it.filters.status === 'new') { %>selected<% } %>>New</option>
+        <option value="active" <% if (it.filters.status === 'active') { %>selected<% } %>>Active</option>
+        <option value="vip" <% if (it.filters.status === 'vip') { %>selected<% } %>>VIP</option>
+        <option value="at_risk" <% if (it.filters.status === 'at_risk') { %>selected<% } %>>At Risk</option>
+        <option value="blocked" <% if (it.filters.status === 'blocked') { %>selected<% } %>>Blocked</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:0.25rem;">
+        <input type="checkbox" name="hasTasks" value="true" <% if (it.filters.hasTasks) { %>checked<% } %> onchange="this.form.submit()">
+        <span>Has open tasks</span>
+      </label>
+      <button type="submit" class="btn btn-sm">Filter</button>
+      <a href="/admin/crm/customers" class="btn btn-sm btn-secondary">Clear</a>
+    </form>
+  </div>
+  <div class="text-muted"><%= it.total %> customer(s)</div>
+</div>
+
+<table class="admin-table">
+  <thead>
+    <tr>
+      <th>Customer</th>
+      <th>Phone</th>
+      <th>Country</th>
+      <th>CRM Status</th>
+      <th>Orders</th>
+      <th>Total Spent</th>
+      <th>Last Order</th>
+      <th>Tags</th>
+      <th>Tasks</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% for (const c of it.customers) { %>
+    <tr>
+      <td>
+        <a href="/admin/crm/customers/<%= c.id %>">
+          <%= c.firstName ?? '' %> <%= c.lastName ?? '' %>
+          <br><small class="text-muted"><%= c.email %></small>
+        </a>
+      </td>
+      <td><%= c.phone ?? '-' %></td>
+      <td><%= c.countryCode ?? '-' %></td>
+      <td><span class="badge badge-<%= c.crmStatus %>"><%= c.crmStatus %></span></td>
+      <td><%= c.totalOrders %></td>
+      <td>$<%= (c.totalSpentCents / 100).toFixed(2) %></td>
+      <td><%= c.lastOrderDate ? new Date(c.lastOrderDate).toLocaleDateString() : '-' %></td>
+      <td>
+        <% for (const tag of c.tags) { %>
+        <span class="badge" style="background-color: <%= tag.color ?? '#666' %>; color: #fff;"><%= tag.name %></span>
+        <% } %>
+        <% if (c.tags.length === 0) { %>-<% } %>
+      </td>
+      <td>
+        <% if (c.openTasksCount > 0) { %>
+        <span class="badge badge-warning"><%= c.openTasksCount %> open</span>
+        <% } else { %>
+        <span class="text-muted">0</span>
+        <% } %>
+      </td>
+      <td><a href="/admin/crm/customers/<%= c.id %>" class="btn btn-sm">View</a></td>
+    </tr>
+    <% } %>
+    <% if (it.customers.length === 0) { %>
+    <tr><td colspan="10" class="text-center">No customers found.</td></tr>
+    <% } %>
+  </tbody>
+</table>
+
+<% if (it.totalPages > 1) { %>
+<div class="pagination" style="display:flex;gap:0.5rem;margin-top:1rem;align-items:center;">
+  <% if (it.page > 1) { %>
+  <a class="btn btn-sm" href="/admin/crm/customers?page=<%= it.page - 1 %>&q=<%= it.filters.q %>&tag=<%= it.filters.tag %>&status=<%= it.filters.status %>&hasTasks=<%= it.filters.hasTasks %>">&laquo; Prev</a>
+  <% } %>
+  <span class="text-muted">Page <%= it.page %> of <%= it.totalPages %></span>
+  <% if (it.page < it.totalPages) { %>
+  <a class="btn btn-sm" href="/admin/crm/customers?page=<%= it.page + 1 %>&q=<%= it.filters.q %>&tag=<%= it.filters.tag %>&status=<%= it.filters.status %>&hasTasks=<%= it.filters.hasTasks %>">Next &raquo;</a>
+  <% } %>
+</div>
+<% } %>
+
+<div style="margin-top:2rem;">
+  <a href="/admin/crm/tasks" class="btn btn-secondary">View Open Tasks</a>
+</div>

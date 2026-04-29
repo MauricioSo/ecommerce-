@@ -1,0 +1,210 @@
+<% const o = it.order; %>
+
+<div class="admin-detail-header">
+  <h1>Order <code><%= o.id.substring(0, 8) %></code></h1>
+  <span class="badge badge-<%= o.status %>"><%= o.status %></span>
+  <div class="admin-detail-actions">
+    <% if (o.status !== 'cancelled' && o.status !== 'refunded') { %>
+    <form action="/admin/orders/<%= o.id %>/status" method="post" style="display:inline"
+      data-confirm="Cancel this order?">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <input type="hidden" name="targetStatus" value="cancelled">
+      <button class="btn btn-sm btn-danger" type="submit">Cancel</button>
+    </form>
+    <% } %>
+  </div>
+</div>
+
+<div class="order-detail-grid">
+  <div class="order-detail-main">
+    <h2>Items</h2>
+    <table class="admin-table">
+      <thead>
+        <tr><th>Product</th><th>Variant</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>
+      </thead>
+      <tbody>
+        <% for (const item of o.items) { %>
+        <tr>
+          <td><%= item.productName %></td>
+          <td><%= item.variantLabel ?? '-' %></td>
+          <td><%= item.quantity %></td>
+          <td>$<%= (item.unitPriceCents / 100).toFixed(2) %></td>
+          <td>$<%= (item.totalPriceCents / 100).toFixed(2) %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+
+    <h2>Payments</h2>
+    <% if (o.payments.length === 0) { %>
+    <p class="text-muted">No payments recorded.</p>
+    <% } else { %>
+    <table class="admin-table">
+      <thead>
+        <tr><th>ID</th><th>Provider</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        <% for (const p of o.payments) { %>
+        <tr>
+          <td><code><%= p.id.substring(0, 8) %></code></td>
+          <td><%= p.provider %></td>
+          <td>$<%= (p.amountCents / 100).toFixed(2) %></td>
+          <td><span class="badge badge-<%= p.status %>"><%= p.status %></span></td>
+          <td><%= new Date(p.createdAt).toLocaleString() %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+    <% } %>
+
+    <h2>Status Actions</h2>
+    <div id="status-actions" style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+      <% for (const ts of o.validTransitions) { %>
+      <button class="btn btn-sm btn-primary"
+        hx-post="/admin/orders/<%= o.id %>/status"
+        hx-vals='{"targetStatus": "<%= ts %>"}'
+        hx-target="#status-toast"
+        hx-swap="innerHTML">
+        <%= ts.charAt(0).toUpperCase() + ts.slice(1) %>
+      </button>
+      <% } %>
+      <% if (o.validTransitions.length === 0) { %>
+      <span class="text-muted">No available transitions (final state).</span>
+      <% } %>
+    </div>
+    <div id="status-toast" style="margin-top:0.5rem;"></div>
+
+    <h2>Shipment</h2>
+    <% if (it.shipment) { %>
+    <table class="admin-table">
+      <tbody>
+        <tr><td><strong>Status</strong></td><td><span class="badge badge-<%= it.shipment.status %>"><%= it.shipment.status %></span></td></tr>
+        <tr><td><strong>Carrier</strong></td><td><%= it.shipment.carrier || '-' %></td></tr>
+        <tr><td><strong>Tracking</strong></td><td><%= it.shipment.trackingCode || '-' %></td></tr>
+        <tr><td><strong>Tracking URL</strong></td><td><%= it.shipment.trackingUrl ? `<a href="${it.shipment.trackingUrl}" target="_blank">${it.shipment.trackingUrl}</a>` : '-' %></td></tr>
+        <tr><td><strong>Est. Delivery</strong></td><td><%= it.shipment.estimatedDeliveryDate || '-' %></td></tr>
+      </tbody>
+    </table>
+    <p><a href="/admin/fulfillment/shipments/<%= o.id %>" class="btn btn-sm btn-secondary">Manage Shipment</a></p>
+    <% if (it.shipmentEvents && it.shipmentEvents.length > 0) { %>
+    <h4 style="margin-top:1rem;">Shipment Timeline</h4>
+    <div class="timeline" style="font-size:0.85rem;">
+      <% for (const evt of it.shipmentEvents) { %>
+      <div class="timeline-entry">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <strong><%= evt.title %></strong>
+          <span class="text-muted" style="margin-left:0.5rem;"><%= new Date(evt.occurredAt).toLocaleString() %></span>
+          <% if (evt.description) { %>
+          <div class="timeline-payload"><%= evt.description %></div>
+          <% } %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    <% } %>
+    <% } else { %>
+    <p class="text-muted">No shipment. <a href="/admin/fulfillment/shipments/<%= o.id %>">Create one</a></p>
+    <form action="/admin/fulfillment/shipments" method="POST" style="margin-top:0.5rem">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <input type="hidden" name="orderId" value="<%= o.id %>">
+      <button type="submit" class="btn btn-sm btn-primary">Create Shipment</button>
+    </form>
+    <% } %>
+
+    <h2>Returns</h2>
+    <% if (it.returns && it.returns.length > 0) { %>
+    <table class="admin-table">
+      <thead><tr><th>ID</th><th>Reason</th><th>Status</th></tr></thead>
+      <tbody>
+        <% for (const r of it.returns) { %>
+        <tr>
+          <td><code><%= r.id.substring(0, 8) %></code></td>
+          <td><%= r.reason %></td>
+          <td><span class="badge badge-<%= r.status %>"><%= r.status %></span></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+    <% } else { %>
+    <p class="text-muted">No returns.</p>
+    <% } %>
+
+    <h2>Timeline</h2>
+    <% if (it.timeline.length === 0) { %>
+    <p class="text-muted">No events recorded.</p>
+    <% } else { %>
+    <div class="timeline">
+      <% for (const evt of it.timeline) { %>
+      <div class="timeline-entry">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <strong><%= evt.eventType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %></strong>
+          <span class="text-muted" style="margin-left:0.5rem;"><%= new Date(evt.createdAt).toLocaleString() %></span>
+          <% if (evt.payload) { %>
+          <div class="timeline-payload">
+            <% if (evt.payload.from && evt.payload.to) { %>
+            <span class="badge badge-<%= evt.payload.from %>"><%= evt.payload.from %></span>
+            &rarr;
+            <span class="badge badge-<%= evt.payload.to %>"><%= evt.payload.to %></span>
+            <% } %>
+            <% if (evt.payload.reason) { %>
+            <span class="text-muted">Reason: <%= evt.payload.reason %></span>
+            <% } %>
+          </div>
+          <% } %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="order-detail-sidebar">
+    <div class="order-info-card">
+      <h3>Summary</h3>
+      <dl>
+        <dt>Subtotal</dt>
+        <dd>$<%= (o.subtotalCents / 100).toFixed(2) %></dd>
+        <dt>Discount</dt>
+        <dd><% if (o.discountCents > 0) { %>-$<%= (o.discountCents / 100).toFixed(2) %><% } else { %>$0.00<% } %></dd>
+        <dt>Shipping</dt>
+        <dd>$<%= (o.shippingCostCents / 100).toFixed(2) %></dd>
+        <dt>Tax</dt>
+        <dd>$<%= (o.taxCents / 100).toFixed(2) %></dd>
+        <dt class="total">Total</dt>
+        <dd class="total">$<%= (o.totalCents / 100).toFixed(2) %></dd>
+      </dl>
+    </div>
+
+    <div class="order-info-card">
+      <h3>Customer</h3>
+      <dl>
+        <dt>Email</dt>
+        <dd><%= o.customerEmail ?? 'N/A' %></dd>
+      </dl>
+    </div>
+
+    <% if (o.shippingAddress) { %>
+    <div class="order-info-card">
+      <h3>Shipping Address</h3>
+      <address>
+        <%= o.shippingAddress.line1 %><br>
+        <% if (o.shippingAddress.line2) { %><%= o.shippingAddress.line2 %><br><% } %>
+        <%= o.shippingAddress.city %>, <%= o.shippingAddress.state %> <%= o.shippingAddress.postalCode %><br>
+        <%= o.shippingAddress.country %>
+      </address>
+    </div>
+    <% } %>
+
+    <div class="order-info-card">
+      <h3>Dates</h3>
+      <dl>
+        <dt>Created</dt>
+        <dd><%= new Date(o.createdAt).toLocaleString() %></dd>
+        <dt>Updated</dt>
+        <dd><%= new Date(o.updatedAt).toLocaleString() %></dd>
+      </dl>
+    </div>
+  </div>
+</div>

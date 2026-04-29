@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<%= it.csrfToken %>">
+  <title><%= it.title ?? 'Tienda' %> | <%= it.siteName ?? 'Maison \u00c9lite' %></title>
+  <% if (it.metaDescription) { %>
+  <meta name="description" content="<%= it.metaDescription %>">
+  <% } %>
+  <% if (it.metaImage) { %>
+  <meta property="og:image" content="<%= it.metaImage %>">
+  <% } %>
+  <meta property="og:title" content="<%= it.title ?? 'Tienda' %>">
+  <meta property="og:type" content="website">
+  <% if (it.canonicalUrl) { %>
+  <link rel="canonical" href="<%= process.env.BASE_URL ?? 'http://localhost:3000' %><%= it.canonicalUrl %>">
+  <% } %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="/static/js/main.js"></script>
+  <% if (it.jsonLd) { %>
+  <script type="application/ld+json"><%~ it.jsonLd %></script>
+  <% } %>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="/" class="logo"><%= it.siteName ?? 'Maison \u00c9lite' %></a>
+      <div class="nav-search">
+        <form action="/search" method="GET" class="search-bar-nav" autocomplete="off">
+          <input type="text" name="q" placeholder="Buscar productos..." class="search-input" id="nav-search" hx-get="/api/search/suggest" hx-trigger="keyup changed delay:300ms, search" hx-target="#search-suggestions">
+          <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+          <div id="search-suggestions" class="search-suggestions"></div>
+        </form>
+      </div>
+      <div class="nav-links">
+        <a href="/categories/ropa-de-mujer">Mujer</a>
+        <a href="/categories/ropa-de-hombre">Hombre</a>
+        <a href="/categories/accesorios">Accesorios</a>
+        <a href="/categories/calzado">Calzado</a>
+        <a href="/cart" id="cart-link">Carrito (<span id="cart-count"><%= it.cartCount ?? 0 %></span>)</a>
+        <% if (it.customer) { %>
+        <a href="/cuenta">Mi cuenta</a>
+        <% } else { %>
+        <a href="/cuenta/login">Ingresar</a>
+        <% } %>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <%~ it.body %>
+  </main>
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4><%= it.siteName ?? 'Maison \u00c9lite' %></h4>
+        <p>Tu tienda online de confianza.</p>
+      </div>
+      <div class="footer-section">
+        <h4>Enlaces</h4>
+        <ul>
+          <li><a href="/search">Productos</a></li>
+          <li><a href="/cuenta">Mi cuenta</a></li>
+          <li><a href="/cuenta/pedidos">Mis pedidos</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="/politicas/devoluciones">Política de devoluciones</a></li>
+          <li><a href="/politicas/privacidad">Política de privacidad</a></li>
+          <li><a href="/politicas/envio">Envíos y entregas</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-copy">&copy; <%= new Date().getFullYear() %> <%= it.siteName ?? 'Maison \u00c9lite' %>. Todos los derechos reservados.</p>
+  </footer>
+</body>
+</html>

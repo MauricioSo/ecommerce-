@@ -1,0 +1,63 @@
+<div class="checkout-container">
+  <h1 style="margin-bottom:var(--sp-4)">Checkout</h1>
+  <div class="checkout-stepper">
+    <span class="step done">1. Direccion</span>
+    <span class="step active">2. Envio</span>
+    <span class="step">3. Pago</span>
+  </div>
+  <div class="checkout-layout">
+    <div class="checkout-form">
+      <div class="checkout-section">
+        <h2>Metodo de envio</h2>
+        <% if (it.error) { %>
+          <div class="alert alert-error"><%= it.error %></div>
+        <% } %>
+        <form method="POST" action="/checkout/envio">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <input type="hidden" name="checkoutId" value="<%= it.checkoutId %>">
+          <% if (it.shippingOptions.length === 0) { %>
+            <p>No hay opciones de envio disponibles para tu ubicacion. Contacta a soporte.</p>
+          <% } else { %>
+            <% it.shippingOptions.forEach(function(opt, i) { %>
+              <label class="shipping-option" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);border:1px solid var(--border-muted);border-radius:var(--radius-md);margin-bottom:var(--sp-2);cursor:pointer;background:var(--paper-white)">
+                <input type="radio" name="shippingRateId" value="<%= opt.rateId %>" required <% if (i === 0) { %>checked<% } %> style="accent-color:var(--ink-black)">
+                <div class="shipping-option-info" style="flex:1">
+                  <strong><%= opt.name %></strong>
+                  <% if (opt.carrier) { %><span class="shipping-carrier" style="color:var(--text-muted);margin-left:var(--sp-2)"><%= opt.carrier %></span><% } %>
+                  <span class="shipping-days" style="color:var(--text-muted);display:block;font-size:13px"><%= opt.estimatedDaysMin %>-<%= opt.estimatedDaysMax %> dias habiles</span>
+                </div>
+                <div class="shipping-price" style="font-weight:500">
+                  <% if (opt.isFree) { %>
+                    <span class="chip" style="background:var(--sage);color:white">GRATIS</span>
+                  <% } else { %>
+                    <span>$<%= (opt.priceCents / 100).toLocaleString() %></span>
+                  <% } %>
+                </div>
+              </label>
+            <% }) %>
+          <% } %>
+          <div style="display:flex;gap:var(--sp-3);margin-top:var(--sp-4)">
+            <button type="submit" class="btn btn-primary btn-lg" <% if (it.shippingOptions.length === 0) { %>disabled<% } %>>Continuar a pago</button>
+            <a href="/checkout" class="btn btn-ghost">Volver</a>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="checkout-summary" style="background:var(--paper-white);border:1px solid rgba(255,255,255,0.62);border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);padding:var(--sp-4)">
+      <h3 style="font-size:18px;margin-bottom:var(--sp-3)">Resumen</h3>
+      <% it.items.forEach(function(item) { %>
+        <div class="summary-item">
+          <span style="color:var(--text-muted)"><%= item.productName ?? 'Producto' %> x<%= item.quantity %></span>
+          <span>$<%= ((item.unitPriceCents * item.quantity) / 100).toLocaleString() %></span>
+        </div>
+      <% }) %>
+      <div class="summary-total" style="border-top:1px solid var(--border-muted);padding-top:var(--sp-3);margin-top:var(--sp-3)">
+        <strong>Subtotal: </strong>
+        <strong>$<%= (it.subtotal / 100).toLocaleString() %></strong>
+      </div>
+      <div class="summary-address" style="margin-top:var(--sp-3)">
+        <small style="color:var(--text-muted)">Envio a: <%= it.address.line1 %>, <%= it.address.city %></small>
+      </div>
+    </div>
+  </div>
+</div>

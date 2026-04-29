@@ -1,0 +1,49 @@
+<h1>Payment Reconciliation</h1>
+
+<div class="checkout-section">
+  <h2>Stale Pending Payments (>30min)</h2>
+  <% if (it.stale.length === 0) { %>
+  <p class="text-success">No stale pending payments found.</p>
+  <% } else { %>
+  <table class="cart-table">
+    <thead><tr><th>ID</th><th>Order</th><th>Amount</th><th>Status</th><th>Age</th></tr></thead>
+    <tbody>
+      <% for (const p of it.stale) { %>
+      <tr>
+        <td><code><%= p.id.substring(0, 8) %></code></td>
+        <td><code><%= p.orderId.substring(0, 8) %></code></td>
+        <td>$<%= (p.amountCents / 100).toFixed(2) %></td>
+        <td><span class="badge-pending"><%= p.status %></span></td>
+        <td><%= p.ageMinutes %> min</td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<div class="checkout-section">
+  <h2>Approved Payments Without Confirmed Order</h2>
+  <% if (it.orphans.length === 0) { %>
+  <p class="text-success">No orphaned payments found.</p>
+  <% } else { %>
+  <table class="cart-table">
+    <thead><tr><th>ID</th><th>Order</th><th>Amount</th><th>Status</th></tr></thead>
+    <tbody>
+      <% for (const p of it.orphans) { %>
+      <tr>
+        <td><code><%= p.id.substring(0, 8) %></code></td>
+        <td><code><%= p.orderId.substring(0, 8) %></code></td>
+        <td>$<%= (p.amountCents / 100).toFixed(2) %></td>
+        <td><span class="badge-approved"><%= p.status %></span></td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<form action="/admin/payments/reconciliation/run" method="POST">
+  <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+  <button type="submit" class="btn btn-primary">Run Reconciliation</button>
+</form>

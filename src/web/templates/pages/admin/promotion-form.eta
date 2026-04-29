@@ -1,0 +1,49 @@
+<h1>New Promotion</h1>
+<form action="/admin/promotions/new" method="POST" class="admin-form">
+  <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+  <div class="form-group">
+    <label>Name *</label>
+    <input type="text" name="name" required placeholder="e.g. Summer Sale 20% Off">
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Type *</label>
+      <select name="type" required>
+        <option value="cart_percentage">Cart Percentage</option>
+        <option value="cart_fixed">Cart Fixed Amount</option>
+        <option value="sku_percentage">SKU Percentage</option>
+        <option value="sku_fixed">SKU Fixed Amount</option>
+        <option value="free_shipping">Free Shipping</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Discount Type *</label>
+      <select name="discountType" required>
+        <option value="percentage">Percentage (%)</option>
+        <option value="fixed_amount">Fixed Amount ($)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Discount Value *</label>
+      <input type="number" name="discountValue" required placeholder="e.g. 20 for 20%">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label>Starts At</label>
+      <input type="datetime-local" name="startsAt">
+    </div>
+    <div class="form-group">
+      <label>Ends At</label>
+      <input type="datetime-local" name="endsAt">
+    </div>
+    <div class="form-group">
+      <label>Max Uses</label>
+      <input type="number" name="maxUses" placeholder="Leave empty for unlimited">
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Create Promotion</button>
+    <a href="/admin/promotions" class="btn">Cancel</a>
+  </div>
+</form>

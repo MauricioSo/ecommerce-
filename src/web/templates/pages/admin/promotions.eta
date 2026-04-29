@@ -1,0 +1,37 @@
+<h1>Promotions</h1>
+<div class="admin-toolbar">
+  <a href="/admin/promotions/new" class="btn btn-primary">+ New Promotion</a>
+</div>
+<table class="admin-table">
+  <thead>
+    <tr><th>Name</th><th>Type</th><th>Value</th><th>Period</th><th>Uses</th><th>Status</th><th>Actions</th></tr>
+  </thead>
+  <tbody>
+    <% for (const p of it.promotions) { %>
+    <tr>
+      <td><%= p.name %></td>
+      <td><%= p.type %></td>
+      <td><%= p.discountType === "percentage" ? `${p.discountValue}%` : `$${(p.discountValue/100).toFixed(2)}` %></td>
+      <td>
+        <% if (p.startsAt || p.endsAt) { %>
+          <%= p.startsAt ? new Date(p.startsAt).toLocaleDateString() : '...' %> —
+          <%= p.endsAt ? new Date(p.endsAt).toLocaleDateString() : '...' %>
+        <% } else { %>Always<% } %>
+      </td>
+      <td><%= p.usedCount %><%= p.maxUses ? ` / ${p.maxUses}` : '' %></td>
+      <td>
+        <span class="badge <%= p.isActive ? 'badge-published' : 'badge-archived' %>"><%= p.isActive ? "Active" : "Inactive" %></span>
+      </td>
+      <td>
+        <form action="/admin/promotions/<%= p.id %>/toggle" method="POST" style="display:inline">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <button type="submit" class="btn btn-sm"><%= p.isActive ? "Deactivate" : "Activate" %></button>
+        </form>
+      </td>
+    </tr>
+    <% } %>
+    <% if (it.promotions.length === 0) { %>
+    <tr><td colspan="7" class="text-center">No promotions. <a href="/admin/promotions/new">Create one</a>.</td></tr>
+    <% } %>
+  </tbody>
+</table>

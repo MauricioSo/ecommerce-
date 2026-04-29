@@ -1,0 +1,1 @@
+import "./src/web/app.ts";

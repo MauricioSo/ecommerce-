@@ -1,0 +1,68 @@
+<% const d = it.dashboard; %>
+
+<h1>Dashboard</h1>
+
+<div class="dashboard-grid">
+  <div class="kpi-card">
+    <div class="kpi-label">Total Orders</div>
+    <div class="kpi-value"><%= d.totalOrders %></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Revenue</div>
+    <div class="kpi-value">$<%= (d.totalRevenue / 100).toFixed(2) %></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Pending</div>
+    <div class="kpi-value"><%= d.statusCounts['pending'] ?? 0 %></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Processing</div>
+    <div class="kpi-value"><%= d.statusCounts['processing'] ?? 0 %></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Shipped</div>
+    <div class="kpi-value"><%= d.statusCounts['shipped'] ?? 0 %></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Delivered</div>
+    <div class="kpi-value"><%= d.statusCounts['delivered'] ?? 0 %></div>
+  </div>
+</div>
+
+<div class="admin-section">
+  <h2>Orders by Status</h2>
+  <div class="status-bar">
+    <% const statuses = ['pending','confirmed','processing','shipped','delivered','cancelled','refunded']; %>
+    <% for (const s of statuses) { %>
+    <% const c = d.statusCounts[s] ?? 0; %>
+    <% if (c > 0) { %>
+    <a href="/admin/orders?status=<%= s %>" class="status-bar-item badge badge-<%= s %>">
+      <%= s %>: <%= c %>
+    </a>
+    <% } %>
+    <% } %>
+  </div>
+</div>
+
+<div class="admin-section">
+  <h2>Recent Orders</h2>
+  <table class="admin-table">
+    <thead>
+      <tr><th>Order</th><th>Customer</th><th>Status</th><th>Total</th><th>Date</th></tr>
+    </thead>
+    <tbody>
+      <% for (const o of d.recentOrders) { %>
+      <tr>
+        <td><a href="/admin/orders/<%= o.id %>"><code><%= o.id.substring(0, 8) %></code></a></td>
+        <td><%= o.customerEmail ?? 'N/A' %></td>
+        <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
+        <td>$<%= (o.totalCents / 100).toFixed(2) %></td>
+        <td><%= new Date(o.createdAt).toLocaleString() %></td>
+      </tr>
+      <% } %>
+      <% if (d.recentOrders.length === 0) { %>
+      <tr><td colspan="5" class="text-center">No orders yet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>

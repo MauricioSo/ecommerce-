@@ -1,0 +1,1 @@
+<span class="order-status status-<%= it.status %>"><%= (it.label ?? it.status).replace(/_/g, ' ') %></span>

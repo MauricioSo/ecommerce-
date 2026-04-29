@@ -1,0 +1,27 @@
+<h1><%= it.category ? "Edit Category" : "New Category" %></h1>
+<form action="/admin/categories<%= it.category ? `/${it.category.id}` : '' %>" method="POST" class="admin-form">
+  <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+  <div class="form-group">
+    <label for="name">Name *</label>
+    <input type="text" id="name" name="name" value="<%= it.category?.name ?? '' %>" required>
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="3"><%= it.category?.description ?? '' %></textarea>
+  </div>
+  <% if (!it.category) { %>
+  <div class="form-group">
+    <label for="parentId">Parent Category</label>
+    <select id="parentId" name="parentId">
+      <option value="">— None (top level) —</option>
+      <% for (const c of it.categories) { %>
+      <option value="<%= c.id %>"><%= c.name %></option>
+      <% } %>
+    </select>
+  </div>
+  <% } %>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary"><%= it.category ? "Update" : "Create" %></button>
+    <a href="/admin/categories" class="btn">Cancel</a>
+  </div>
+</form>
