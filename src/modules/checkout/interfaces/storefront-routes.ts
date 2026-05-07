@@ -5,8 +5,10 @@ import { calculateShipping } from "../../pricing/application/shipping-use-cases.
 import { calculateTax } from "../../pricing/application/tax-use-cases.ts";
 import { countryDetectPlugin } from "../../../web/middleware/country-detect.ts";
 import { ensureCsrfToken } from "../../../web/helpers/csrf.ts";
+import { escapeHtml } from "../../../web/helpers/escape.ts";
 import { getAddresses, getCustomerProfile } from "../../customers/application/account-use-cases.ts";
 import { CustomerSession, type CustomerInfo } from "../../../web/middleware/customer-session.ts";
+import { signCookieValue, verifySignedCookieValue } from "../../../web/helpers/signed-cookie.ts";
 
 async function resolveCheckoutCustomer(customer: CustomerInfo | null, cookie: Record<string, { value: unknown }>) {
   if (customer) return customer;
@@ -33,17 +35,17 @@ export const checkoutStorefrontRoutes = new Elysia()
       const count = await uc.getCartItemCount(sessionId, cartCustomerId);
       return `<div id="cart-count" hx-swap-oob="innerHTML">${count}</div><div class="toast toast-success">Agregado al carrito</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ skuId: t.String(), quantity: t.Optional(t.String()) }) })
+  }, { body: t.Object({ skuId: t.String({ maxLength: 64 }), quantity: t.Optional(t.String({ maxLength: 10 })), csrfToken: t.Optional(t.String({ maxLength: 256 })) }) })
   .post("/cart/update", async ({ body }) => {
     await uc.updateCartItemUseCase(body.itemId, parseInt(body.quantity, 10));
     return new Response(null, { status: 302, headers: { Location: "/cart" } });
-  }, { body: t.Object({ itemId: t.String(), quantity: t.String() }) })
+  }, { body: t.Object({ itemId: t.String({ maxLength: 64 }), quantity: t.String({ maxLength: 10 }), csrfToken: t.Optional(t.String({ maxLength: 256 })) }) })
   .post("/cart/remove", async ({ body }) => {
     await uc.removeCartItemUseCase(body.itemId);
     return new Response(null, { status: 302, headers: { Location: "/cart" } });
-  }, { body: t.Object({ itemId: t.String() }) })
+  }, { body: t.Object({ itemId: t.String({ maxLength: 64 }), csrfToken: t.Optional(t.String({ maxLength: 256 })) }) })
   .get("/checkout", async ({ cookie, customer, countryCode }) => {
     const checkoutCustomer = await resolveCheckoutCustomer(customer, cookie as Record<string, { value: unknown }>);
     const sessionId = ensureSession(cookie, checkoutCustomer);
@@ -187,20 +189,21 @@ export const checkoutStorefrontRoutes = new Elysia()
     }
   }, {
     body: t.Object({
-      checkoutId: t.String(),
-      email: t.Optional(t.String()),
-      firstName: t.Optional(t.String()),
-      lastName: t.Optional(t.String()),
-      phone: t.Optional(t.String()),
-      line1: t.String(),
-      line2: t.Optional(t.String()),
-      neighborhood: t.Optional(t.String()),
-      city: t.String(),
-      state: t.String(),
-      postalCode: t.String(),
-      country: t.Optional(t.String()),
-      reference: t.Optional(t.String()),
-      notes: t.Optional(t.String()),
+      checkoutId: t.String({ maxLength: 64 }),
+      email: t.Optional(t.String({ maxLength: 254 })),
+      firstName: t.Optional(t.String({ maxLength: 100 })),
+      lastName: t.Optional(t.String({ maxLength: 100 })),
+      phone: t.Optional(t.String({ maxLength: 30 })),
+      line1: t.String({ maxLength: 300 }),
+      line2: t.Optional(t.String({ maxLength: 300 })),
+      neighborhood: t.Optional(t.String({ maxLength: 100 })),
+      city: t.String({ maxLength: 100 }),
+      state: t.String({ maxLength: 100 }),
+      postalCode: t.String({ maxLength: 20 }),
+      country: t.Optional(t.String({ maxLength: 3 })),
+      reference: t.Optional(t.String({ maxLength: 300 })),
+      notes: t.Optional(t.String({ maxLength: 1000 })),
+      csrfToken: t.Optional(t.String({ maxLength: 256 })),
     }),
   })
   .get("/checkout/envio", async ({ cookie, customer, set }) => {
@@ -295,7 +298,7 @@ export const checkoutStorefrontRoutes = new Elysia()
       return renderView("layouts/base.eta", { body: bodyHtml, title: "Envío", customer: checkoutCustomer, csrfToken });
     }
   }, {
-    body: t.Object({ checkoutId: t.String(), shippingRateId: t.Optional(t.String()) }),
+    body: t.Object({ checkoutId: t.String({ maxLength: 64 }), shippingRateId: t.Optional(t.String({ maxLength: 64 })), csrfToken: t.Optional(t.String({ maxLength: 256 })) }),
   })
   .post("/checkout/confirmar", async ({ body, cookie }) => {
     const csrfToken = ensureCsrfToken(cookie);
@@ -311,7 +314,9 @@ export const checkoutStorefrontRoutes = new Elysia()
           return new Response(null, { status: 302, headers: { Location: meta.initPoint as string } });
         }
         if (meta.url && meta.token) {
-          const formHtml = `<!DOCTYPE html><html><head><script src="/static/js/main.js"></script></head><body><form id="wp" method="POST" action="${meta.url}" data-autosubmit><input type="hidden" name="token_ws" value="${meta.token}"></form></body></html>`;
+          const safeUrl = escapeHtml(String(meta.url));
+          const safeToken = escapeHtml(String(meta.token));
+          const formHtml = `<!DOCTYPE html><html><head><script src="/static/js/htmx.min.js"></script><script src="/static/js/main.js"></script></head><body><form id="wp" method="POST" action="${safeUrl}" data-autosubmit><input type="hidden" name="token_ws" value="${safeToken}"></form></body></html>`;
           return new Response(formHtml, { headers: { "Content-Type": "text/html" } });
         }
       }
@@ -321,7 +326,7 @@ export const checkoutStorefrontRoutes = new Elysia()
           orderPublicToken: result.orderPublicToken,
           paymentStatus: "failed",
           title: "Error en el pago",
-          retryUrl: `/checkout/retry/${result.orderId}`,
+          retryUrl: `/checkout/retry/${result.orderId}?token=${encodeURIComponent(result.orderPublicToken)}`,
           csrfToken,
         });
         return renderView("layouts/base.eta", { body: bodyHtml, title: "Error en el pago", csrfToken });
@@ -335,57 +340,57 @@ export const checkoutStorefrontRoutes = new Elysia()
       });
       return renderView("layouts/base.eta", { body: bodyHtml, title: "Checkout", csrfToken });
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ checkoutId: t.String() }) })
-  .get("/checkout/retry/:orderId", async ({ params, cookie }) => {
+  }, { body: t.Object({ checkoutId: t.String({ maxLength: 64 }), csrfToken: t.Optional(t.String({ maxLength: 256 })) }) })
+  .get("/checkout/retry/:orderId", async ({ params, query, cookie, customer }) => {
     const csrfToken = ensureCsrfToken(cookie);
+    const checkoutCustomer = await resolveCheckoutCustomer(customer, cookie as Record<string, { value: unknown }>);
     const paymentRepo = await import("../../payments/infrastructure/repository.ts");
     const order = await paymentRepo.findOrderById(params.orderId);
-    if (!order || (order.status !== "pending")) {
+    const token = typeof query?.token === "string" ? query.token : "";
+    const ownsOrder = !!order && ((checkoutCustomer?.customerId && order.customerId === checkoutCustomer.customerId) || token === order.publicToken);
+    if (!order || !ownsOrder || (order.status !== "payment_pending" && order.status !== "payment_failed")) {
       return new Response(null, { status: 302, headers: { Location: "/cart" } });
     }
-    const bodyHtml = `<div class="order-success"><h2>Reintentar pago</h2><p>Orden ${params.orderId.slice(0, 8)} pendiente de pago.</p><form action="/checkout/retry" method="POST"><input type="hidden" name="csrfToken" value="${csrfToken}"><input type="hidden" name="orderId" value="${params.orderId}"><button type="submit" class="btn btn-primary btn-lg">Reintentar pago</button></form></div>`;
+    const bodyHtml = `<div class="order-success"><h2>Reintentar pago</h2><p>Orden ${escapeHtml(params.orderId.slice(0, 8))} pendiente de pago.</p><form action="/checkout/retry" method="POST"><input type="hidden" name="csrfToken" value="${escapeHtml(csrfToken)}"><input type="hidden" name="orderId" value="${escapeHtml(params.orderId)}"><input type="hidden" name="token" value="${escapeHtml(order.publicToken)}"><button type="submit" class="btn btn-primary btn-lg">Reintentar pago</button></form></div>`;
     return renderView("layouts/base.eta", { body: bodyHtml, title: "Reintentar pago", csrfToken });
   })
-  .post("/checkout/retry", async ({ body }) => {
+  .post("/checkout/retry", async ({ body, cookie, customer }) => {
     try {
-      const { initiatePaymentUseCase } = await import("../../payments/application/use-cases.ts");
+      const checkoutCustomer = await resolveCheckoutCustomer(customer, cookie as Record<string, { value: unknown }>);
       const paymentRepo = await import("../../payments/infrastructure/repository.ts");
-      const order = await paymentRepo.findOrderById(body.orderId);
-      if (!order || order.status !== "pending") {
-        return new Response(null, { status: 302, headers: { Location: "/cart" } });
-      }
-      const result = await initiatePaymentUseCase({
+      const result = await uc.retryPaymentForOrderUseCase({
         orderId: body.orderId,
-        amountCents: order.totalCents,
-        currency: order.currency,
-        idempotencyKey: crypto.randomUUID(),
+        publicToken: body.token,
+        customerId: checkoutCustomer?.customerId,
       });
-      const attempt = await paymentRepo.findPaymentAttemptById(result.attemptId);
+      const attempt = await paymentRepo.findPaymentAttemptById(result.paymentAttemptId);
       if (attempt?.metadata && typeof attempt.metadata === "object") {
         const meta = attempt.metadata as Record<string, unknown>;
         if (meta.initPoint) {
           return new Response(null, { status: 302, headers: { Location: meta.initPoint as string } });
         }
         if (meta.url && meta.token) {
-          const formHtml = `<!DOCTYPE html><html><head><script src="/static/js/main.js"></script></head><body><form id="wp" method="POST" action="${meta.url}" data-autosubmit><input type="hidden" name="token_ws" value="${meta.token}"></form></body></html>`;
+          const safeUrl = escapeHtml(String(meta.url));
+          const safeToken = escapeHtml(String(meta.token));
+          const formHtml = `<!DOCTYPE html><html><head><script src="/static/js/htmx.min.js"></script><script src="/static/js/main.js"></script></head><body><form id="wp" method="POST" action="${safeUrl}" data-autosubmit><input type="hidden" name="token_ws" value="${safeToken}"></form></body></html>`;
           return new Response(formHtml, { headers: { "Content-Type": "text/html" } });
         }
       }
-      if (result.status === "approved") {
+      if (result.paymentStatus === "approved") {
         return new Response(null, { status: 302, headers: { Location: `/checkout/success?order=${body.orderId}` } });
       }
       return `<div class="toast toast-error">No se pudo iniciar el pago. Intenta nuevamente.</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ orderId: t.String(), csrfToken: t.String() }) });
+  }, { body: t.Object({ orderId: t.String({ maxLength: 64 }), token: t.String({ maxLength: 256 }), csrfToken: t.String({ maxLength: 256 }) }) });
 
 function ensureSession(cookie: Record<string, any>, _customer: { customerId: string } | null): string {
-  const existing = cookie.sessionId?.value ?? cookie._cart?.value;
-  if (existing && typeof existing === "string") return existing;
+  const existing = verifySignedCookieValue(cookie.sessionId?.value) ?? verifySignedCookieValue(cookie._cart?.value);
+  if (existing) return existing;
   const sid = crypto.randomUUID();
-  cookie.sessionId?.set?.({ value: sid, httpOnly: true, maxAge: 60 * 60 * 24 * 30, path: "/" });
+  cookie.sessionId?.set?.({ value: signCookieValue(sid), httpOnly: true, maxAge: 60 * 60 * 24 * 30, path: "/" });
   return sid;
 }

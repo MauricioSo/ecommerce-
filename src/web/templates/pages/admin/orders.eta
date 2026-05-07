@@ -3,7 +3,7 @@
 <div class="admin-toolbar">
   <div class="order-filters">
     <form method="get" action="/admin/orders" style="display:flex;gap:0.5rem;align-items:center;">
-      <select name="status" onchange="this.form.submit()">
+      <select name="status" data-auto-submit>
         <option value="">All Statuses</option>
         <option value="pending" <% if (it.currentStatus === 'pending') { %>selected<% } %>>Pending</option>
         <option value="confirmed" <% if (it.currentStatus === 'confirmed') { %>selected<% } %>>Confirmed</option>

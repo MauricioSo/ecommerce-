@@ -7,6 +7,7 @@ import * as tasksUc from "../application/tasks-use-cases.ts";
 import { getAdminUserFromSession } from "../../admin/application/use-cases.ts";
 
 import { ensureCsrfToken } from "../../../web/helpers/csrf.ts";
+import { escapeHtml } from "../../../web/helpers/escape.ts";
 
 async function getAdminId(cookie: Record<string, unknown>): Promise<string | undefined> {
   const sessionValue = (cookie as Record<string, { value?: string }>).admin_session?.value;
@@ -71,9 +72,9 @@ export const crmAdminRoutes = new Elysia({ prefix: "/admin/crm" })
       });
       return `<div class="toast toast-success">Note added</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ body: t.String(), visibility: t.Optional(t.String()) }) })
+  }, { body: t.Object({ body: t.String({ maxLength: 5000 }), visibility: t.Optional(t.String({ maxLength: 20 })) }) })
   .post("/notes/:id", async ({ params, body, cookie }) => {
     const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
     const adminId = await getAdminId(cookie);
@@ -86,9 +87,9 @@ export const crmAdminRoutes = new Elysia({ prefix: "/admin/crm" })
       });
       return `<div class="toast toast-success">Note updated</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ body: t.Optional(t.String()), visibility: t.Optional(t.String()) }) })
+  }, { body: t.Object({ body: t.Optional(t.String({ maxLength: 5000 })), visibility: t.Optional(t.String({ maxLength: 20 })) }) })
   .post("/tags", async ({ body, cookie }) => {
     const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
     const adminId = await getAdminId(cookie);
@@ -100,11 +101,11 @@ export const crmAdminRoutes = new Elysia({ prefix: "/admin/crm" })
         actorId: adminId,
       });
       if (!tag) throw new Error("Failed to create tag");
-      return `<div class="toast toast-success">Tag "${tag.name}" created</div>`;
+      return `<div class="toast toast-success">Tag "${escapeHtml(tag.name)}" created</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ name: t.String(), color: t.Optional(t.String()), description: t.Optional(t.String()) }) })
+  }, { body: t.Object({ name: t.String({ maxLength: 50 }), color: t.Optional(t.String({ maxLength: 7 })), description: t.Optional(t.String({ maxLength: 500 })) }) })
   .post("/customers/:id/tags", async ({ params, body, cookie }) => {
     const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
     const adminId = await getAdminId(cookie);
@@ -116,9 +117,9 @@ export const crmAdminRoutes = new Elysia({ prefix: "/admin/crm" })
       });
       return `<div class="toast toast-success">Tag assigned</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ tagId: t.String() }) })
+  }, { body: t.Object({ tagId: t.String({ maxLength: 64 }) }) })
   .post("/customers/:id/tags/remove", async ({ params, body, cookie }) => {
     const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
     const adminId = await getAdminId(cookie);
@@ -130,9 +131,9 @@ export const crmAdminRoutes = new Elysia({ prefix: "/admin/crm" })
       });
       return `<div class="toast toast-success">Tag removed</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ tagId: t.String() }) })
+  }, { body: t.Object({ tagId: t.String({ maxLength: 64 }) }) })
   .get("/tasks", async ({ query, cookie }) => {
     const csrfToken = ensureCsrfToken(cookie);
     const tasks = await tasksUc.listOpenTasksUseCase({
@@ -165,14 +166,14 @@ export const crmAdminRoutes = new Elysia({ prefix: "/admin/crm" })
       });
       return `<div class="toast toast-success">Task created</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
   }, { body: t.Object({
-    type: t.String(),
-    title: t.String(),
-    description: t.Optional(t.String()),
-    priority: t.Optional(t.String()),
-    dueAt: t.Optional(t.String()),
+    type: t.String({ maxLength: 30 }),
+    title: t.String({ maxLength: 200 }),
+    description: t.Optional(t.String({ maxLength: 2000 })),
+    priority: t.Optional(t.String({ maxLength: 20 })),
+    dueAt: t.Optional(t.String({ maxLength: 30 })),
   }) })
   .post("/tasks/:id/status", async ({ params, body, cookie }) => {
     const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
@@ -185,9 +186,9 @@ export const crmAdminRoutes = new Elysia({ prefix: "/admin/crm" })
       });
       return `<div class="toast toast-success">Task updated</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ status: t.String() }) })
+  }, { body: t.Object({ status: t.String({ maxLength: 30 }) }) })
   .post("/customers/:id/interactions", async ({ params, body, cookie }) => {
     const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
     const adminId = await getAdminId(cookie);
@@ -201,12 +202,12 @@ export const crmAdminRoutes = new Elysia({ prefix: "/admin/crm" })
       });
       return `<div class="toast toast-success">Interaction recorded</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
   }, { body: t.Object({
-    channel: t.String(),
-    summary: t.String(),
-    direction: t.Optional(t.String()),
+    channel: t.String({ maxLength: 20 }),
+    summary: t.String({ maxLength: 1000 }),
+    direction: t.Optional(t.String({ maxLength: 20 })),
   }) })
   .post("/customers/:id/status", async ({ params, body, cookie }) => {
     const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
@@ -215,6 +216,6 @@ export const crmAdminRoutes = new Elysia({ prefix: "/admin/crm" })
       await cockpitUc.updateCrmCustomerStatusUseCase(params.id, input.status as string, adminId);
       return `<div class="toast toast-success">Customer status updated</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ status: t.String() }) });
+  }, { body: t.Object({ status: t.String({ maxLength: 30 }) }) });

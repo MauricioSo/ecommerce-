@@ -16,6 +16,9 @@ import { eq, and } from "drizzle-orm";
 import { findWishlistByCustomerId } from "../infrastructure/repository.ts";
 import { CustomerSession, customerSessionPlugin, type CustomerInfo } from "../../../web/middleware/customer-session.ts";
 import { ensureCsrfToken } from "../../../web/helpers/csrf.ts";
+import { vs } from "../../../web/schemas/validation.ts";
+import { requestAccountDeletionUseCase, exportCustomerDataUseCase } from "../application/data-protection-use-cases.ts";
+import { escapeHtml } from "../../../web/helpers/escape.ts";
 
 function requireCustomer(customer: CustomerInfo | null): CustomerInfo {
   if (!customer) throw new Error("Unauthorized");
@@ -136,16 +139,16 @@ export const storefrontAccountRoutes = new Elysia({ prefix: "/cuenta" })
     }
   }, {
     body: t.Object({
-      csrfToken: t.Optional(t.String()),
-      line1: t.String(),
-      line2: t.Optional(t.String()),
-      neighborhood: t.Optional(t.String()),
-      city: t.String(),
-      state: t.String(),
-      postalCode: t.String(),
-      phone: t.Optional(t.String()),
-      country: t.Optional(t.String()),
-      reference: t.Optional(t.String()),
+      csrfToken: vs.csrfToken,
+      line1: vs.line1,
+      line2: vs.line2,
+      neighborhood: vs.neighborhood,
+      city: vs.city,
+      state: vs.state,
+      postalCode: vs.postalCode,
+      phone: vs.phone,
+      country: vs.country,
+      reference: vs.reference,
     }),
   })
   .post("/direcciones/:id/default", async ({ customer, cookie, params }) => {
@@ -159,7 +162,7 @@ export const storefrontAccountRoutes = new Elysia({ prefix: "/cuenta" })
       return safeRedirect("/cuenta/direcciones");
     }
   }, {
-    body: t.Object({ csrfToken: t.Optional(t.String()) }),
+    body: t.Object({ csrfToken: vs.csrfToken }),
   })
   .post("/direcciones/:id/eliminar", async ({ customer, cookie, params }) => {
     try {
@@ -172,7 +175,7 @@ export const storefrontAccountRoutes = new Elysia({ prefix: "/cuenta" })
       return safeRedirect("/cuenta/direcciones");
     }
   }, {
-    body: t.Object({ csrfToken: t.Optional(t.String()) }),
+    body: t.Object({ csrfToken: vs.csrfToken }),
   })
   .get("/perfil", async ({ customer, cookie }) => {
     try {
@@ -210,12 +213,12 @@ export const storefrontAccountRoutes = new Elysia({ prefix: "/cuenta" })
     }
   }, {
     body: t.Object({
-      csrfToken: t.Optional(t.String()),
-      firstName: t.Optional(t.String()),
-      lastName: t.Optional(t.String()),
-      phone: t.Optional(t.String()),
-      documentType: t.Optional(t.String()),
-      documentNumber: t.Optional(t.String()),
+      csrfToken: vs.csrfToken,
+      firstName: vs.firstName,
+      lastName: vs.lastName,
+      phone: vs.phone,
+      documentType: t.Optional(t.String({ maxLength: 20 })),
+      documentNumber: t.Optional(t.String({ maxLength: 30 })),
     }),
   })
   .get("/favoritos", async ({ customer, cookie }) => {
@@ -267,5 +270,34 @@ export const storefrontAccountRoutes = new Elysia({ prefix: "/cuenta" })
       return safeRedirect("/cuenta/favoritos");
     }
   }, {
-    body: t.Object({ csrfToken: t.Optional(t.String()) }),
+    body: t.Object({ csrfToken: vs.csrfToken }),
+  })
+  .get("/mis-datos", async ({ customer }) => {
+    if (!customer) return loginRedirect("/cuenta/mis-datos");
+    const data = await exportCustomerDataUseCase(customer.customerId);
+    return new Response(JSON.stringify(data, null, 2), {
+      headers: { "Content-Type": "application/json", "Content-Disposition": "attachment; filename=mis-datos.json" },
+    });
+  })
+  .get("/eliminar-cuenta", async ({ customer, cookie }) => {
+    if (!customer) return loginRedirect("/cuenta");
+    const csrfToken = ensureCsrfToken(cookie);
+    const body = renderView("pages/storefront/account/delete-account.eta", { csrfToken });
+    return renderView("layouts/base.eta", { body, title: "Eliminar cuenta", customer, csrfToken });
+  })
+  .post("/eliminar-cuenta", async ({ customer, body }) => {
+    if (!customer) return loginRedirect("/cuenta");
+    const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
+    const confirm = input.confirm as string ?? "";
+    if (confirm !== "ELIMINAR") {
+      return `<div class="toast toast-error">Debes escribir ELIMINAR para confirmar</div>`;
+    }
+    try {
+      await requestAccountDeletionUseCase(customer.customerId);
+      return new Response(null, { status: 302, headers: { Location: "/cuenta/login?deleted=1" } });
+    } catch (e) {
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
+    }
+  }, {
+    body: t.Object({ confirm: t.String({ maxLength: 20 }), csrfToken: vs.csrfToken }),
   });

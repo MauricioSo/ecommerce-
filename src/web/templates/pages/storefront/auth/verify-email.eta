@@ -1,0 +1,27 @@
+<div class="auth-container">
+  <div class="auth-panel">
+    <h1>Verificar email</h1>
+    <% if (it.verified) { %>
+      <div class="alert alert-success">Tu email ha sido verificado correctamente. Ya puedes <a href="/cuenta/login">iniciar sesion</a>.</div>
+    <% } else if (it.error) { %>
+      <div class="alert alert-error"><%= it.error %></div>
+      <form method="POST" action="/cuenta/reenviar-verificacion">
+        <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+        <button type="submit" class="btn btn-primary">Reenviar email de verificacion</button>
+      </form>
+    <% } else if (it.sent) { %>
+      <div class="alert alert-success">Se ha enviado un email de verificacion. Revisa tu bandeja de entrada.</div>
+      <form method="POST" action="/cuenta/reenviar-verificacion">
+        <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+        <button type="submit" class="btn btn-secondary">Reenviar email</button>
+      </form>
+    <% } else { %>
+      <p>Se requiere verificacion de email para continuar.</p>
+      <form method="POST" action="/cuenta/reenviar-verificacion">
+        <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+        <button type="submit" class="btn btn-primary">Enviar email de verificacion</button>
+      </form>
+    <% } %>
+    <p><a href="/cuenta/login">Volver al inicio de sesion</a></p>
+  </div>
+</div>

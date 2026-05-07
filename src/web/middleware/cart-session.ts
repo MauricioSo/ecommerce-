@@ -3,6 +3,7 @@ import { getDb } from "../../shared/infrastructure/db/index.ts";
 import * as s from "../../shared/infrastructure/db/schema.ts";
 import { eq } from "drizzle-orm";
 import { customerSessionPlugin } from "./customer-session.ts";
+import { signCookieValue, verifySignedCookieValue } from "../helpers/signed-cookie.ts";
 
 export type CartContext = {
   cartId: string;
@@ -13,7 +14,7 @@ export const cartSessionPlugin = new Elysia({ name: "cart-session" })
   .derive(async ({ cookie, customer }): Promise<CartContext> => {
     const db = getDb();
     const cartCookie = cookie._cart;
-    const existingCartId = cartCookie?.value;
+    const existingCartId = verifySignedCookieValue(cartCookie?.value);
 
     if (customer?.customerId) {
       const existingCart = await db.select().from(s.carts)
@@ -21,7 +22,7 @@ export const cartSessionPlugin = new Elysia({ name: "cart-session" })
         .limit(1);
       if (existingCart[0]) {
         if (!cartCookie || existingCartId !== existingCart[0].id) {
-          cartCookie?.set({ value: existingCart[0].id, httpOnly: true, path: "/", maxAge: 30 * 24 * 60 * 60 });
+          cartCookie?.set({ value: signCookieValue(existingCart[0].id), httpOnly: true, path: "/", maxAge: 30 * 24 * 60 * 60 });
         }
         return { cartId: existingCart[0].id };
       }
@@ -52,6 +53,6 @@ export const cartSessionPlugin = new Elysia({ name: "cart-session" })
       sessionId,
       customerId: customer?.customerId ?? null,
     });
-    cartCookie?.set({ value: newCartId, httpOnly: true, path: "/", maxAge: 30 * 24 * 60 * 60 });
+    cartCookie?.set({ value: signCookieValue(newCartId), httpOnly: true, path: "/", maxAge: 30 * 24 * 60 * 60 });
     return { cartId: newCartId };
   });

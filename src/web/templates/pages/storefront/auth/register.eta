@@ -38,6 +38,10 @@
           <option value="BRA" <% if (it.country === 'BRA') { %>selected<% } %>>Brasil</option>
         </select>
       </div>
+      <div class="form-group" style="display:flex;align-items:flex-start;gap:0.5rem">
+        <input type="checkbox" id="consentGiven" name="consentGiven" value="true" required style="margin-top:0.25rem">
+        <label for="consentGiven" style="font-size:13px">Acepto la <a href="/privacidad" target="_blank">politica de privacidad</a></label>
+      </div>
       <button type="submit" class="btn btn-primary">Crear cuenta</button>
     </form>
     <p>Ya tienes cuenta? <a href="/cuenta/login">Iniciar sesion</a></p>

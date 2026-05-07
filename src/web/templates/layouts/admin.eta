@@ -10,8 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/main.css">
   <link rel="stylesheet" href="/static/css/admin.css">
+  <script src="/static/js/htmx.min.js"></script>
   <script src="/static/js/main.js"></script>
-  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 </head>
 <body class="admin-layout">
   <aside class="admin-sidebar">

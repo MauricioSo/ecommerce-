@@ -3,6 +3,7 @@ import { renderView } from "../../../web/templates/engine.ts";
 import * as uc from "../application/use-cases.ts";
 
 import { ensureCsrfToken } from "../../../web/helpers/csrf.ts";
+import { escapeHtml } from "../../../web/helpers/escape.ts";
 
 export const pricingAdminRoutes = new Elysia({ prefix: "/admin/promotions" })
   .get("/", async ({ cookie }) => {
@@ -29,17 +30,17 @@ export const pricingAdminRoutes = new Elysia({ prefix: "/admin/promotions" })
       });
       return new Response(null, { status: 302, headers: { Location: "/admin/promotions" } });
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
   }, {
     body: t.Object({
-      name: t.String(),
-      type: t.String(),
-      discountValue: t.String(),
-      discountType: t.String(),
-      startsAt: t.Optional(t.String()),
-      endsAt: t.Optional(t.String()),
-      maxUses: t.Optional(t.String()),
+      name: t.String({ maxLength: 200 }),
+      type: t.String({ maxLength: 30 }),
+      discountValue: t.String({ maxLength: 10 }),
+      discountType: t.String({ maxLength: 20 }),
+      startsAt: t.Optional(t.String({ maxLength: 30 })),
+      endsAt: t.Optional(t.String({ maxLength: 30 })),
+      maxUses: t.Optional(t.String({ maxLength: 10 })),
     }),
   })
   .post("/:id/toggle", async ({ params }) => {

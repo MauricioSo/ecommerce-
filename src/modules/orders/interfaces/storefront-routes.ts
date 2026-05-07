@@ -1,8 +1,8 @@
 import { Elysia, t } from "elysia";
 import { renderView } from "../../../web/templates/engine.ts";
 import * as orderUc from "../application/use-cases.ts";
-import * as paymentUc from "../../payments/application/use-cases.ts";
 import * as trackingUc from "../../fulfillment/application/tracking-use-cases.ts";
+import { retryPaymentForOrderUseCase } from "../../checkout/application/use-cases.ts";
 
 import { ensureCsrfToken } from "../../../web/helpers/csrf.ts";
 
@@ -42,16 +42,14 @@ export const orderStorefrontRoutes = new Elysia()
     }
     const input = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
     if (input.token !== order.publicToken) return new Response("Order not found", { status: 404 });
-    if (order.status !== "pending") return new Response(null, { status: 302, headers: { Location: `/orders/${params.id}?token=${order.publicToken}` } });
+    if (order.status !== "payment_pending" && order.status !== "payment_failed") return new Response(null, { status: 302, headers: { Location: `/orders/${params.id}?token=${order.publicToken}` } });
 
-    const result = await paymentUc.initiatePaymentUseCase({
+    const result = await retryPaymentForOrderUseCase({
       orderId: params.id,
-      amountCents: order.totalCents,
-      currency: order.currency,
-      idempotencyKey: crypto.randomUUID(),
+      publicToken: order.publicToken,
     });
 
-    if (result.status === "approved") {
+    if (result.paymentStatus === "approved") {
       return new Response(null, { status: 302, headers: { Location: `/orders/${params.id}?token=${order.publicToken}` } });
     }
 
@@ -59,12 +57,12 @@ export const orderStorefrontRoutes = new Elysia()
     const bodyHtml = renderView("pages/storefront/checkout-success.eta", {
       orderId: params.id,
       orderPublicToken: order.publicToken,
-      paymentStatus: result.status,
-      paymentAttemptId: result.attemptId,
+      paymentStatus: result.paymentStatus,
+      paymentAttemptId: result.paymentAttemptId,
       totalCents: order.totalCents,
       currency: order.currency,
       title: "Payment Result",
       csrfToken,
     });
     return renderView("layouts/base.eta", { body: bodyHtml, title: "Payment Result", csrfToken });
-  }, { body: t.Object({ token: t.String(), paymentAttemptId: t.Optional(t.String()) }) });
+  }, { body: t.Object({ token: t.String({ maxLength: 256 }), paymentAttemptId: t.Optional(t.String({ maxLength: 64 })) }) });

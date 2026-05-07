@@ -1,5 +1,5 @@
 <div class="order-success">
-  <% if (it.paymentStatus === 'approved' || !it.paymentStatus) { %>
+  <% if (it.paymentStatus === 'approved') { %>
   <div class="success-icon">&#10003;</div>
   <h1>Pedido confirmado!</h1>
   <p>Gracias por tu compra. Tu orden ID es:</p>
@@ -27,9 +27,10 @@
   </form>
   <a href="/" class="btn btn-secondary">Continuar comprando</a>
   <% } else { %>
+  <div class="pending-icon">&#9203;</div>
   <h1>Orden creada</h1>
   <p>Tu orden ID es: <code><%= it.orderId %></code></p>
-  <p>Estado del pago: <strong><%= it.paymentStatus %></strong></p>
+  <p>El estado del pago esta siendo verificado.</p>
   <div style="margin:var(--sp-3) 0">
     <a href="/orders/<%= it.orderPublicToken %>" class="btn btn-primary">Ver estado del pedido</a>
   </div>

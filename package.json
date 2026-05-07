@@ -11,9 +11,11 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/bun": "^1.3.12",
     "@types/pg": "^8.20.0",
     "bun-types": "^1.3.12",

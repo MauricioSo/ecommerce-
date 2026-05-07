@@ -48,7 +48,7 @@
           <% if (it.filters.inStock) { %>
           <input type="hidden" name="inStock" value="1">
           <% } %>
-          <select name="sort" onchange="this.form.submit()" style="padding:var(--sp-2) var(--sp-3);border:1px solid var(--border-muted);border-radius:var(--radius-md);background:var(--paper-white);font-size:13px">
+          <select name="sort" data-auto-submit style="padding:var(--sp-2) var(--sp-3);border:1px solid var(--border-muted);border-radius:var(--radius-md);background:var(--paper-white);font-size:13px">
             <option value="newest" <%= it.currentSort === 'newest' ? 'selected' : '' %>>Mas nuevos</option>
             <option value="price_asc" <%= it.currentSort === 'price_asc' ? 'selected' : '' %>>Precio: menor a mayor</option>
             <option value="price_desc" <%= it.currentSort === 'price_desc' ? 'selected' : '' %>>Precio: mayor a menor</option>

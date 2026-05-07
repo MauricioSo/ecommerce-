@@ -107,10 +107,10 @@ export class MercadoPagoProvider implements PaymentProvider {
     return { status: this.mapStatus(data.status), metadata: data as unknown as Record<string, unknown> };
   }
 
-  parseWebhook(body: string, signature: string | null, requestId?: string, dataId?: string): WebhookEvent | null {
+  async parseWebhook(body: string, signature: string | null, requestId?: string, dataId?: string): Promise<WebhookEvent | null> {
     if (this.webhookSecret) {
       if (!signature) return null;
-      if (!this.verifySignature(body, signature, requestId, dataId)) return null;
+      if (!(await this.verifySignature(body, signature, requestId, dataId))) return null;
     }
 
     try {
@@ -160,31 +160,37 @@ export class MercadoPagoProvider implements PaymentProvider {
     return map[currency] ?? "USD";
   }
 
-  private verifySignature(_body: string, signature: string, requestId?: string, dataId?: string): boolean {
-    if (!this.webhookSecret) return false;
-    if (!requestId || !dataId) return false;
-
-    const parts = signature.split(",");
-    let ts = "";
-    let v1 = "";
-    for (const part of parts) {
-      const eqIdx = part.indexOf("=");
-      if (eqIdx === -1) continue;
-      const key = part.substring(0, eqIdx).trim();
-      const val = part.substring(eqIdx + 1).trim();
-      if (key === "ts") ts = val;
-      if (key === "v1") v1 = val;
-    }
-    if (!ts || !v1) return false;
-
+  private async verifySignature(_body: string, signature: string, requestId?: string, dataId?: string): Promise<boolean> {
     try {
-      const crypto = require("crypto") as typeof import("crypto");
+      if (!this.webhookSecret) return false;
+      if (!requestId || !dataId) return false;
+
+      const parts = signature.split(",");
+      let ts = "";
+      let v1 = "";
+      for (const part of parts) {
+        const eqIdx = part.indexOf("=");
+        if (eqIdx === -1) continue;
+        const key = part.substring(0, eqIdx).trim();
+        const val = part.substring(eqIdx + 1).trim();
+        if (key === "ts") ts = val;
+        if (key === "v1") v1 = val;
+      }
+      if (!ts || !v1) return false;
 
       const manifest = `id:${dataId};request-id:${requestId};ts:${ts}`;
-      const expected = crypto.createHmac("sha256", this.webhookSecret).update(manifest).digest("hex");
+      const keyBytes = new TextEncoder().encode(this.webhookSecret);
+      const msgBytes = new TextEncoder().encode(manifest);
+      const key = await crypto.subtle.importKey("raw", keyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+      const sig = await crypto.subtle.sign("HMAC", key, msgBytes);
+      const expected = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
 
       if (v1.length !== expected.length) return false;
-      return crypto.timingSafeEqual(Buffer.from(v1), Buffer.from(expected));
+      const a = new TextEncoder().encode(v1);
+      const b = new TextEncoder().encode(expected);
+      let diff = 0;
+      for (let i = 0; i < a.length; i++) diff |= a[i]! ^ b[i]!;
+      return diff === 0;
     } catch {
       return false;
     }

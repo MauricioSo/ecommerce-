@@ -28,6 +28,7 @@ export async function insertCustomer(input: {
   documentNumber?: string | null;
   locale?: string | null;
   countryCode?: string | null;
+  consentGivenAt?: Date | null;
 }, db: Db = getDb()) {
   await db.insert(s.customers).values(input);
 }
@@ -40,6 +41,7 @@ export async function updateCustomer(id: string, data: {
   documentNumber?: string | null;
   locale?: string | null;
   emailVerifiedAt?: Date | null;
+  consentGivenAt?: Date | null;
   lastLoginAt?: Date | null;
   isActive?: boolean;
   passwordHash?: string | null;
@@ -156,6 +158,46 @@ export async function findPasswordResetToken(tokenHash: string, db: Db = getDb()
 
 export async function markPasswordResetTokenUsed(id: string, db: Db = getDb()) {
   await db.update(s.passwordResetTokens).set({ usedAt: new Date() }).where(eq(s.passwordResetTokens.id, id));
+}
+
+export async function insertEmailVerificationToken(input: {
+  id: string;
+  customerId: string;
+  tokenHash: string;
+  expiresAt: Date;
+}, db: Db = getDb()) {
+  await db.insert(s.emailVerificationTokens).values(input);
+}
+
+export async function findEmailVerificationToken(tokenHash: string, db: Db = getDb()) {
+  const rows = await db.select().from(s.emailVerificationTokens).where(eq(s.emailVerificationTokens.tokenHash, tokenHash));
+  return rows[0] ?? null;
+}
+
+export async function markEmailVerificationTokenUsed(id: string, db: Db = getDb()) {
+  await db.update(s.emailVerificationTokens).set({ usedAt: new Date() }).where(eq(s.emailVerificationTokens.id, id));
+}
+
+export async function insertConsentRecord(input: {
+  id: string;
+  customerId: string;
+  consentType: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}, db: Db = getDb()) {
+  await db.insert(s.consentRecords).values(input);
+}
+
+export async function findConsentRecordsByCustomerId(customerId: string, db: Db = getDb()) {
+  return db.select().from(s.consentRecords).where(eq(s.consentRecords.customerId, customerId));
+}
+
+export async function deleteAddressesByCustomerId(customerId: string, db: Db = getDb()) {
+  await db.delete(s.addresses).where(eq(s.addresses.customerId, customerId));
+}
+
+export async function deleteConsentRecordsByCustomerId(customerId: string, db: Db = getDb()) {
+  await db.delete(s.consentRecords).where(eq(s.consentRecords.customerId, customerId));
 }
 
 export async function insertNotificationPreferences(input: {

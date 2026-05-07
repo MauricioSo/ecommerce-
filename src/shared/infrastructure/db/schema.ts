@@ -148,8 +148,8 @@ export const carts = pgTable("carts", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
-  index("idx_carts_session").on(table.sessionId),
-  index("idx_carts_customer").on(table.customerId),
+  uniqueIndex("idx_carts_session_unique").on(table.sessionId),
+  uniqueIndex("idx_carts_customer_unique").on(table.customerId),
 ]);
 
 export const cartItems = pgTable("cart_items", {
@@ -344,10 +344,21 @@ export const customers = pgTable("customers", {
   locale: varchar("locale", { length: 10 }).default("es"),
   countryCode: varchar("country_code", { length: 3 }),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
+  consentGivenAt: timestamp("consent_given_at", { withTimezone: true }),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const consentRecords = pgTable("consent_records", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }).notNull(),
+  consentType: varchar("consent_type", { length: 50 }).notNull(),
+  givenAt: timestamp("given_at", { withTimezone: true }).defaultNow().notNull(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
 });
 
 export const addresses = pgTable("addresses", {
@@ -394,6 +405,16 @@ export const adminUsers = pgTable("admin_users", {
 }, (table) => [
   index("idx_admin_users_email").on(table.email),
 ]);
+
+export const adminSessions = pgTable("admin_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  adminUserId: uuid("admin_user_id").references(() => adminUsers.id, { onDelete: "cascade" }).notNull(),
+  tokenJti: varchar("token_jti", { length: 64 }).notNull().unique(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const ROLES = {
   super_admin: {
@@ -496,6 +517,15 @@ export const customerSessions = pgTable("customer_sessions", {
 ]);
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }).notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
   id: uuid("id").primaryKey().defaultRandom(),
   customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }).notNull(),
   tokenHash: text("token_hash").notNull().unique(),

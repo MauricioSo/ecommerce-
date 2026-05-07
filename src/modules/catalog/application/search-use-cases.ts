@@ -87,7 +87,7 @@ export async function searchProductsUseCase(filters: SearchFilters): Promise<Pag
   return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
 }
 
-type AggRow = {
+export type AggRow = {
   productId: string;
   minPrice: number;
   maxPrice: number;
@@ -194,7 +194,7 @@ async function searchWithAggregation(
   return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
 }
 
-function sortAggRows(rows: AggRow[], sortBy?: string): AggRow[] {
+export function sortAggRows(rows: AggRow[], sortBy?: string): AggRow[] {
   const copy = [...rows];
   switch (sortBy) {
     case "price_asc":

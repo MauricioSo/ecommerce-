@@ -1,4 +1,4 @@
-import { eq, and, lt, desc } from "drizzle-orm";
+import { eq, and, lt, desc, sql } from "drizzle-orm";
 import { getDb } from "../db/index.ts";
 import * as s from "../db/schema.ts";
 
@@ -26,7 +26,8 @@ export async function findPendingOutboxEvents(limit: number = 50) {
       lt(s.outboxEvents.nextRetryAt, now),
     ))
     .orderBy(s.outboxEvents.createdAt)
-    .limit(limit);
+    .limit(limit)
+    .for("update", { skipLocked: true });
 }
 
 export async function updateOutboxEvent(id: string, data: {
@@ -42,4 +43,11 @@ export async function findStuckOutboxEvents() {
   return getDb().select().from(s.outboxEvents)
     .where(eq(s.outboxEvents.status, "failed"))
     .orderBy(desc(s.outboxEvents.createdAt));
+}
+
+export async function countPendingOutboxEvents(): Promise<number> {
+  const result = await getDb().select({ count: sql<number>`count(*)::int` })
+    .from(s.outboxEvents)
+    .where(eq(s.outboxEvents.status, "pending"));
+  return result[0]?.count ?? 0;
 }

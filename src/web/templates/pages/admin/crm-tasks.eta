@@ -3,7 +3,7 @@
 <div class="admin-toolbar">
   <div class="task-filters">
     <form method="get" action="/admin/crm/tasks" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-      <select name="priority" onchange="this.form.submit()">
+      <select name="priority" data-auto-submit>
         <option value="">All Priorities</option>
         <option value="low" <% if (it.filters.priority === 'low') { %>selected<% } %>>Low</option>
         <option value="normal" <% if (it.filters.priority === 'normal') { %>selected<% } %>>Normal</option>

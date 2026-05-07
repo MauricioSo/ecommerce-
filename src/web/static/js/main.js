@@ -52,6 +52,12 @@ document.addEventListener("htmx:afterSettle", function (e) {
 document.addEventListener("DOMContentLoaded", function () {
   var form = document.querySelector("form[data-autosubmit]");
   if (form) form.submit();
+
+  document.querySelectorAll("[data-auto-submit]").forEach(function (el) {
+    el.addEventListener("change", function () {
+      if (el.form) el.form.submit();
+    });
+  });
 });
 
 (function () {

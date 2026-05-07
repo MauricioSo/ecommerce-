@@ -61,6 +61,10 @@ export async function initiatePaymentUseCase(input: {
     if (result.status === "approved") {
       await repo.updateOrderStatus(input.orderId, "confirmed", t);
       await confirmReservationsForOrder(input.orderId);
+    } else if (result.status === "failed" || result.status === "rejected") {
+      await repo.updateOrderStatus(input.orderId, "payment_failed", t);
+    } else {
+      await repo.updateOrderStatus(input.orderId, "awaiting_payment", t);
     }
 
     const order = await repo.findOrderById(input.orderId, t);
@@ -77,7 +81,7 @@ export async function initiatePaymentUseCase(input: {
 
 export async function handleWebhookUseCase(body: string, signature: string | null, requestId?: string, dataId?: string): Promise<{ processed: boolean; reason?: string }> {
   const provider = getPaymentProvider();
-  let event = provider.parseWebhook(body, signature, requestId, dataId);
+  let event = await provider.parseWebhook(body, signature, requestId, dataId);
   if (!event) return { processed: false, reason: "invalid_payload" };
 
   if (event.metadata?.requiresFetch && provider instanceof MercadoPagoProvider) {
@@ -86,7 +90,11 @@ export async function handleWebhookUseCase(body: string, signature: string | nul
     if (!result) return { processed: false, reason: "fetch_failed" };
     event = {
       ...event,
+      providerEventId: `mp_${paymentId}_${result.status}`,
+      orderId: String(result.metadata.external_reference ?? event.orderId ?? ""),
       status: result.status,
+      amountCents: Math.round(Number(result.metadata.transaction_amount ?? 0) * 100),
+      currency: String(result.metadata.currency_id ?? event.currency ?? ""),
       metadata: { ...event.metadata, ...result.metadata },
     };
     const orderId = (result.metadata as Record<string, unknown>)?.external_reference as string | undefined;
@@ -102,7 +110,10 @@ export async function handleWebhookUseCase(body: string, signature: string | nul
     if (!result) return { processed: false, reason: "commit_failed" };
     event = {
       ...event,
+      providerEventId: `webpay_commit_${token}`,
       status: result.status,
+      amountCents: Math.round(Number(result.metadata.amount ?? 0) * 100),
+      currency: "CLP",
       metadata: { ...event.metadata, ...result.metadata },
     };
     const orderId = event.orderId || ((event.metadata as Record<string, unknown>)?.order_id as string);
@@ -140,6 +151,36 @@ async function processWebhookEvent(event: WebhookEvent): Promise<{ processed: bo
   }
 
   const newStatus = event.status as PaymentStatus;
+  if (event.orderId && event.orderId !== attempt.orderId) {
+    await recordPaymentEvent({
+      attemptId: attempt.id,
+      eventType: event.eventType,
+      providerEventId: event.providerEventId,
+      payload: { ...event.raw, rejectionReason: "order_mismatch" },
+    });
+    return { processed: false, reason: "order_mismatch" };
+  }
+
+  if (event.amountCents > 0 && event.amountCents !== attempt.amountCents) {
+    await recordPaymentEvent({
+      attemptId: attempt.id,
+      eventType: event.eventType,
+      providerEventId: event.providerEventId,
+      payload: { ...event.raw, rejectionReason: "amount_mismatch" },
+    });
+    return { processed: false, reason: "amount_mismatch" };
+  }
+
+  if (event.currency && event.currency !== attempt.currency) {
+    await recordPaymentEvent({
+      attemptId: attempt.id,
+      eventType: event.eventType,
+      providerEventId: event.providerEventId,
+      payload: { ...event.raw, rejectionReason: "currency_mismatch" },
+    });
+    return { processed: false, reason: "currency_mismatch" };
+  }
+
   const validTransitions: Record<string, PaymentStatus[]> = {
     pending: ["processing", "approved", "failed"],
     processing: ["approved", "rejected", "failed"],

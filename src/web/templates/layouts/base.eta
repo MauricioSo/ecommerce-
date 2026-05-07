@@ -20,11 +20,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/main.css">
-  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="/static/js/htmx.min.js"></script>
   <script src="/static/js/main.js"></script>
-  <% if (it.jsonLd) { %>
-  <script type="application/ld+json"><%~ it.jsonLd %></script>
-  <% } %>
 </head>
 <body>
   <header>
@@ -45,6 +42,10 @@
         <a href="/cart" id="cart-link">Carrito (<span id="cart-count"><%= it.cartCount ?? 0 %></span>)</a>
         <% if (it.customer) { %>
         <a href="/cuenta">Mi cuenta</a>
+        <form action="/cuenta/logout" method="post" style="display:inline">
+          <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+          <button type="submit" class="btn btn-sm" style="background:none;border:none;color:inherit;cursor:pointer;font-size:inherit;text-decoration:underline">Cerrar sesion</button>
+        </form>
         <% } else { %>
         <a href="/cuenta/login">Ingresar</a>
         <% } %>

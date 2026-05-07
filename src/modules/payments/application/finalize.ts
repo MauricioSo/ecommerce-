@@ -58,6 +58,8 @@ export async function finalizePaymentAttemptFromProvider(input: {
     if (input.newStatus === "approved") {
       await repo.updateOrderStatus(attempt.orderId, "confirmed", t);
       await confirmReservationsForOrder(attempt.orderId);
+    } else if (input.newStatus === "failed" || input.newStatus === "rejected") {
+      await repo.updateOrderStatus(attempt.orderId, "payment_failed", t);
     }
 
     const order = await repo.findOrderById(attempt.orderId, t);

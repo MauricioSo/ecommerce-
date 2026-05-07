@@ -13,7 +13,7 @@
   <div class="admin-detail-actions">
     <form action="/admin/crm/customers/<%= c.customer.id %>/status" method="post" style="display:inline;">
       <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
-      <select name="status" onchange="this.form.submit()" style="padding:0.25rem;">
+      <select name="status" data-auto-submit style="padding:0.25rem;">
         <option value="new" <% if (c.profile?.status === 'new') { %>selected<% } %>>New</option>
         <option value="active" <% if (c.profile?.status === 'active') { %>selected<% } %>>Active</option>
         <option value="vip" <% if (c.profile?.status === 'vip') { %>selected<% } %>>VIP</option>

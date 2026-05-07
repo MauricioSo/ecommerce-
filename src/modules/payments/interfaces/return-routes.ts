@@ -73,6 +73,26 @@ export const paymentReturnRoutes = new Elysia({ prefix: "/checkout/return" })
             return renderPending(externalRef, "No se encontro un intento de pago valido para esta orden.");
           }
 
+          const mpResultMeta = result.metadata as Record<string, unknown>;
+          const mpAmount = Number(mpResultMeta.transaction_amount ?? 0) * 100;
+          const mpCurrency = String(mpResultMeta.currency_id ?? "");
+          if (mpAmount > 0 && Math.round(mpAmount) !== active.amountCents) {
+            return renderRejected(externalRef, "El monto del pago no coincide con la orden.");
+          }
+          if (mpCurrency && mpCurrency !== active.currency) {
+            return renderRejected(externalRef, "La moneda del pago no coincide con la orden.");
+          }
+
+          const mpMetadata = active.metadata as Record<string, unknown> | null;
+          const activePreferenceId = String(mpMetadata?.preferenceId ?? active.providerIntentId);
+          if (activePreferenceId && result.metadata) {
+            const mpResult = result.metadata as Record<string, unknown>;
+            const resultPreferenceId = String(mpResult.preference_id ?? "");
+            if (resultPreferenceId && resultPreferenceId !== activePreferenceId) {
+              return renderPending(externalRef, "El pago no corresponde al intento activo.");
+            }
+          }
+
           await finalizePaymentAttemptFromProvider({
             attemptId: active.id,
             newStatus: "approved",
@@ -113,14 +133,12 @@ export const paymentReturnRoutes = new Elysia({ prefix: "/checkout/return" })
     return handleWebPayReturn(body as Record<string, string>);
   }, {
     body: t.Object({
-      token_ws: t.Optional(t.String()),
-      order_id: t.Optional(t.String()),
+      token_ws: t.Optional(t.String({ maxLength: 256 })),
     }),
   });
 
 async function handleWebPayReturn(params: Record<string, string>) {
   const tokenWs = params.token_ws ?? "";
-  const orderIdParam = params.order_id ?? "";
 
   if (!tokenWs) {
     return new Response(null, { status: 302, headers: { Location: "/cart" } });
@@ -128,7 +146,7 @@ async function handleWebPayReturn(params: Record<string, string>) {
 
   const attempt = await repo.findPaymentAttemptByProviderIntentId(tokenWs);
   if (!attempt) {
-    return renderRejected(orderIdParam, "No se encontro un intento de pago para este token.");
+    return renderRejected("", "No se encontro un intento de pago para este token.");
   }
 
   if (attempt.status === "approved") {
@@ -163,6 +181,11 @@ async function handleWebPayReturn(params: Record<string, string>) {
   }
 
   const commitData = result.metadata as Record<string, unknown>;
+
+  const commitBuyOrder = String(commitData.buy_order ?? "");
+  if (commitBuyOrder && commitBuyOrder !== attempt.orderId.slice(0, 26)) {
+    return renderRejected(attempt.orderId, "La orden confirmada por WebPay no coincide.");
+  }
 
   if (result.status === "approved") {
     const commitAmount = Number(commitData.amount);

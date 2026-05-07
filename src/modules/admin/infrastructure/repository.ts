@@ -49,6 +49,34 @@ export async function listAdminUsers() {
   }).from(s.adminUsers);
 }
 
+export async function insertAdminSession(input: {
+  id: string;
+  adminUserId: string;
+  tokenJti: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  expiresAt: Date;
+}) {
+  const db = getDb();
+  await db.insert(s.adminSessions).values(input);
+}
+
+export async function findAdminSessionByJti(jti: string) {
+  const db = getDb();
+  const rows = await db.select().from(s.adminSessions).where(eq(s.adminSessions.tokenJti, jti));
+  return rows[0] ?? null;
+}
+
+export async function deleteAdminSession(jti: string) {
+  const db = getDb();
+  await db.delete(s.adminSessions).where(eq(s.adminSessions.tokenJti, jti));
+}
+
+export async function deleteAdminSessionsByUser(adminUserId: string) {
+  const db = getDb();
+  await db.delete(s.adminSessions).where(eq(s.adminSessions.adminUserId, adminUserId));
+}
+
 export function hasPermission(role: string, permission: string): boolean {
   const roleDef = s.ROLES[role as keyof typeof s.ROLES];
   if (!roleDef) return false;

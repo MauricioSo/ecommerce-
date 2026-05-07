@@ -7,11 +7,16 @@ import * as inventoryRepo from "../../modules/inventory/infrastructure/repositor
 import { getCartItemCount } from "../../modules/checkout/application/use-cases.ts";
 import { sanitizeHtml } from "../../web/middleware/sanitize.ts";
 import { ensureCsrfToken } from "../../web/helpers/csrf.ts";
+import { escapeHtml } from "../../web/helpers/escape.ts";
+import { getDb } from "../../shared/infrastructure/db/index.ts";
+import * as s from "../../shared/infrastructure/db/schema.ts";
+import { eq, desc } from "drizzle-orm";
 import { CustomerSession } from "../../web/middleware/customer-session.ts";
+import { verifySignedCookieValue } from "../../web/helpers/signed-cookie.ts";
 
 async function resolveSessionContext(cookie: Record<string, { value: unknown }>) {
   const customer = await CustomerSession.resolve(cookie);
-  const sessionId = (cookie._cart?.value ?? cookie.sessionId?.value) as string | undefined;
+  const sessionId = verifySignedCookieValue(cookie.sessionId?.value) ?? verifySignedCookieValue(cookie._cart?.value) ?? undefined;
   const cartCount = await getCartItemCount(sessionId ?? "", customer?.customerId);
   return { customer, cartCount };
 }
@@ -142,9 +147,11 @@ export const storefrontRoutes = new Elysia()
     if (results.length === 0) return "";
     let html = '<ul class="suggest-list">';
     for (const r of results) {
-      const safeName = sanitizeHtml(r.name);
-      html += `<li><a href="/products/${r.slug}">`;
-      if (r.image) html += `<img src="${r.image}" alt="${safeName}" class="suggest-img">`;
+      const safeName = escapeHtml(r.name);
+      const safeSlug = escapeHtml(r.slug);
+      const safeImage = escapeHtml(r.image ?? "");
+      html += `<li><a href="/products/${safeSlug}">`;
+      if (r.image) html += `<img src="${safeImage}" alt="${safeName}" class="suggest-img">`;
       html += `<span class="suggest-name">${safeName}</span>`;
       if (r.price > 0) html += `<span class="suggest-price">$${(r.price / 100).toLocaleString('es')}</span>`;
       html += `</a></li>`;
@@ -153,24 +160,23 @@ export const storefrontRoutes = new Elysia()
     return html;
   })
   .get("/sitemap.xml", async () => {
-    const allSlugs: string[] = [];
-    let page = 1;
-    while (true) {
-      const batch = await searchProductsUseCase({ pageSize: 50, page });
-      for (const p of batch.items) allSlugs.push(p.slug);
-      if (page >= batch.totalPages || batch.items.length === 0) break;
-      page++;
-    }
+    const db = getDb();
+    const products = await db
+      .select({ slug: s.products.slug, updatedAt: s.products.updatedAt })
+      .from(s.products)
+      .where(eq(s.products.editorialStatus, "published"))
+      .orderBy(desc(s.products.updatedAt));
     const categories = await getCategoryList();
     const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
     const today = new Date().toISOString().split("T")[0];
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
     xml += `\n  <url><loc>${baseUrl}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`;
     for (const cat of categories) {
-      xml += `\n  <url><loc>${baseUrl}/categories/${cat.slug}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
+      xml += `\n  <url><loc>${baseUrl}/categories/${escapeHtml(cat.slug)}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
     }
-    for (const slug of allSlugs) {
-      xml += `\n  <url><loc>${baseUrl}/products/${slug}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`;
+    for (const p of products) {
+      const lastmod = p.updatedAt instanceof Date ? p.updatedAt.toISOString().split("T")[0] : today;
+      xml += `\n  <url><loc>${baseUrl}/products/${escapeHtml(p.slug)}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`;
     }
     xml += `\n</urlset>`;
     return new Response(xml, { headers: { "Content-Type": "application/xml" } });
@@ -178,6 +184,11 @@ export const storefrontRoutes = new Elysia()
   .get("/robots.txt", async () => {
     const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
     return `User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /cart\nDisallow: /checkout\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
+  })
+  .get("/privacidad", async ({ cookie }) => {
+    const csrfToken = ensureCsrfToken(cookie);
+    const body = renderView("pages/storefront/privacy-policy.eta", {});
+    return renderView("layouts/base.eta", { body, title: "Politica de Privacidad", csrfToken });
   });
 
 function buildProductJsonLd(product: any, skus: any[], skuAvailability: { skuId: string; available: number }[]): string {

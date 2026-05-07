@@ -43,6 +43,27 @@
       "when": 1777415976642,
       "tag": "0005_omniscient_elektra",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777848496490,
+      "tag": "0006_married_dragon_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777849633458,
+      "tag": "0007_young_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1777860640625,
+      "tag": "0008_fine_doctor_octopus",
+      "breakpoints": true
     }
   ]
 }

@@ -29,7 +29,7 @@ export const csrfPlugin = new Elysia({ name: "csrf" })
     const cookieToken = cookie[CSRF_COOKIE_NAME]?.value as string | undefined;
     if (!cookieToken) {
       set.status = 403;
-      return "CSRF cookie missing";
+      return new Response("CSRF cookie missing", { status: 403 });
     }
 
     const headerToken = request.headers.get(CSRF_HEADER);
@@ -41,5 +41,6 @@ export const csrfPlugin = new Elysia({ name: "csrf" })
     }
 
     set.status = 403;
-    return "CSRF token mismatch";
-  });
+    return new Response("CSRF token mismatch", { status: 403 });
+  })
+  .as("global");

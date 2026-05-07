@@ -1,6 +1,10 @@
 import * as repo from "./repository.ts";
 import { createOutboxEvent, markCompleted, markFailed, type OutboxEvent } from "./domain.ts";
 import { getDb } from "../db/index.ts";
+import { createLogger } from "../logger/index.ts";
+import { recordOutboxEvent, setOutboxPending } from "../metrics.ts";
+
+const logger = createLogger();
 
 export async function emitEvent(input: {
   aggregateType: string;
@@ -85,7 +89,9 @@ export async function processOutboxBatch(limit: number = 50): Promise<{ processe
         nextRetryAt: null,
       });
       processed++;
-    } catch {
+      recordOutboxEvent("completed");
+      logger.info("Outbox event processed", { eventId: event.id, eventType: event.eventType, aggregateId: event.aggregateId });
+    } catch (err) {
       const failed_event = markFailed(event);
       await repo.updateOutboxEvent(event.id, {
         status: failed_event.status,
@@ -93,8 +99,21 @@ export async function processOutboxBatch(limit: number = 50): Promise<{ processe
         nextRetryAt: failed_event.nextRetryAt,
       });
       failed++;
+      recordOutboxEvent("failed");
+      logger.error("Outbox event failed", {
+        eventId: event.id,
+        eventType: event.eventType,
+        attempt: event.attempts + 1,
+        maxAttempts: event.maxAttempts,
+        error: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : { message: String(err) },
+      });
     }
   }
+
+  try {
+    const pendingCount = await repo.countPendingOutboxEvents();
+    setOutboxPending(pendingCount);
+  } catch {}
 
   return { processed, failed };
 }

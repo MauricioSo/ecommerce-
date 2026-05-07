@@ -1,0 +1,44 @@
+<div class="content-page">
+  <h1>Politica de Privacidad</h1>
+  <p><strong>Ultima actualizacion:</strong> Mayo 2026</p>
+
+  <h2>1. Datos que recopilamos</h2>
+  <ul>
+    <li>Nombre, email y telefono</li>
+    <li>Direccion de envio y facturacion</li>
+    <li>Documento de identidad (RUT) para facturacion</li>
+    <li>Datos de navegacion (cookies de sesion)</li>
+    <li>Historial de pedidos y pagos</li>
+  </ul>
+
+  <h2>2. Para que usamos tus datos</h2>
+  <ul>
+    <li>Procesar pedidos y pagos</li>
+    <li>Enviar notificaciones de estado de pedido</li>
+    <li>Cumplir obligaciones legales y fiscales</li>
+    <li>Mejorar nuestros servicios</li>
+  </ul>
+
+  <h2>3. Con quien compartimos tus datos</h2>
+  <ul>
+    <li><strong>Proveedores de pago:</strong> WebPay (Transbank) y MercadoPago para procesar transacciones</li>
+    <li><strong>Servicios de envio:</strong> Empresas de courier para la entrega de pedidos</li>
+    <li>No vendemos ni compartimos tus datos con terceros para fines publicitarios</li>
+  </ul>
+
+  <h2>4. Tus derechos (Ley 19.628)</h2>
+  <ul>
+    <li><strong>Acceso:</strong> Puedes descargar todos tus datos desde <a href="/cuenta/mis-datos">tu cuenta</a></li>
+    <li><strong>Rectificacion:</strong> Puedes editar tus datos personales desde <a href="/cuenta">tu perfil</a></li>
+    <li><strong>Eliminacion:</strong> Puedes solicitar la eliminacion de tu cuenta y datos desde <a href="/cuenta/eliminar-cuenta">aqui</a></li>
+  </ul>
+
+  <h2>5. Retencion de datos</h2>
+  <p>Mantenemos tus datos mientras tu cuenta este activa. Si solicitas la eliminacion, anonimizamos tus datos personales en un plazo de 30 dias, excepto la informacion requerida por ley (historial de compras para fines fiscales).</p>
+
+  <h2>6. Seguridad</h2>
+  <p>Utilizamos cifrado HTTPS, contrasenas hasheadas con bcrypt, y medidas de seguridad tecnicas para proteger tus datos.</p>
+
+  <h2>7. Contacto</h2>
+  <p>Para consultas sobre privacidad, contactanos a traves de nuestro formulario de contacto.</p>
+</div>

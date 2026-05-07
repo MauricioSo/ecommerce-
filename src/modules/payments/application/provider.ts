@@ -31,7 +31,7 @@ export interface PaymentProvider {
     idempotencyKey: string;
     metadata?: Record<string, unknown>;
   }): Promise<PaymentProviderResult>;
-  parseWebhook(body: string, signature: string | null, requestId?: string, dataId?: string): WebhookEvent | null;
+  parseWebhook(body: string, signature: string | null, requestId?: string, dataId?: string): Promise<WebhookEvent | null>;
 }
 
 export class MockPaymentProvider implements PaymentProvider {
@@ -52,7 +52,7 @@ export class MockPaymentProvider implements PaymentProvider {
     };
   }
 
-  parseWebhook(body: string, _signature: string | null, _requestId?: string, _dataId?: string): WebhookEvent | null {
+  async parseWebhook(body: string, _signature: string | null, _requestId?: string, _dataId?: string): Promise<WebhookEvent | null> {
     try {
       const data = JSON.parse(body) as Record<string, unknown>;
       return {

@@ -4,13 +4,13 @@
   <div class="crm-filters">
     <form method="get" action="/admin/crm/customers" style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
       <input type="text" name="q" value="<%= it.filters.q %>" placeholder="Search email, name, phone..." class="search-input" style="width:200px;">
-      <select name="tag" onchange="this.form.submit()">
+      <select name="tag" data-auto-submit>
         <option value="">All Tags</option>
         <% for (const tag of it.tags) { %>
         <option value="<%= tag.id %>" <% if (it.filters.tag === tag.id) { %>selected<% } %>><%= tag.name %></option>
         <% } %>
       </select>
-      <select name="status" onchange="this.form.submit()">
+      <select name="status" data-auto-submit>
         <option value="">All Status</option>
         <option value="new" <% if (it.filters.status === 'new') { %>selected<% } %>>New</option>
         <option value="active" <% if (it.filters.status === 'active') { %>selected<% } %>>Active</option>
@@ -19,7 +19,7 @@
         <option value="blocked" <% if (it.filters.status === 'blocked') { %>selected<% } %>>Blocked</option>
       </select>
       <label style="display:flex;align-items:center;gap:0.25rem;">
-        <input type="checkbox" name="hasTasks" value="true" <% if (it.filters.hasTasks) { %>checked<% } %> onchange="this.form.submit()">
+        <input type="checkbox" name="hasTasks" value="true" <% if (it.filters.hasTasks) { %>checked<% } %> data-auto-submit>
         <span>Has open tasks</span>
       </label>
       <button type="submit" class="btn btn-sm">Filter</button>

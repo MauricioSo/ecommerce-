@@ -10,10 +10,14 @@ let dbInstance: ReturnType<typeof drizzle> | null = null;
 export function getPool(): pg.Pool {
   if (pool) return pool;
   const config = getConfig();
+  const sslConfig = (config.NODE_ENV === "production" || config.DB_SSL === "true")
+    ? { ssl: { rejectUnauthorized: true } }
+    : {};
   pool = new Pool({
     connectionString: config.DATABASE_URL,
     min: config.DB_POOL_MIN,
     max: config.DB_POOL_MAX,
+    ...sslConfig,
   });
   return pool;
 }

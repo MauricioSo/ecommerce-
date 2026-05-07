@@ -1,0 +1,17 @@
+<div class="auth-container">
+  <div class="auth-panel">
+    <h1>Eliminar cuenta</h1>
+    <div class="alert alert-error">
+      <strong>Atencion:</strong> Esta accion es irreversible. Todos tus datos personales seran eliminados permanentemente.
+    </div>
+    <p>Para confirmar, escribe <strong>ELIMINAR</strong> en el campo de abajo:</p>
+    <form method="POST" action="/cuenta/eliminar-cuenta">
+      <input type="hidden" name="csrfToken" value="<%= it.csrfToken %>">
+      <div class="form-group">
+        <input type="text" name="confirm" placeholder="Escribe ELIMINAR" required autocomplete="off">
+      </div>
+      <button type="submit" class="btn btn-error">Eliminar mi cuenta</button>
+    </form>
+    <p><a href="/cuenta">Cancelar</a></p>
+  </div>
+</div>

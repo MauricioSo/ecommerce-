@@ -62,7 +62,7 @@ export function createReservation(input: {
 }): InventoryReservation {
   if (!input.skuId) throw new Error("Reservation must reference a SKU");
   if (input.quantity <= 0) throw new Error("Reservation quantity must be positive");
-  const ttl = input.ttlMinutes ?? 30;
+  const ttl = input.ttlMinutes ?? 60;
   return Object.freeze({
     id: crypto.randomUUID(),
     skuId: input.skuId,

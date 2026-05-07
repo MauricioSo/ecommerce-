@@ -3,6 +3,7 @@ import { renderView } from "../../../web/templates/engine.ts";
 import * as uc from "../application/use-cases.ts";
 
 import { ensureCsrfToken } from "../../../web/helpers/csrf.ts";
+import { escapeHtml } from "../../../web/helpers/escape.ts";
 
 export const catalogAdminRoutes = new Elysia({ prefix: "/admin" })
   .get("/products", async ({ cookie }) => {
@@ -20,7 +21,7 @@ export const catalogAdminRoutes = new Elysia({ prefix: "/admin" })
   .post("/products", async ({ body }) => {
     await uc.createProductUseCase({ name: body.name, description: body.description, categoryId: body.categoryId || undefined });
     return new Response(null, { status: 302, headers: { Location: "/admin/products" } });
-  }, { body: t.Object({ name: t.String(), description: t.Optional(t.String()), categoryId: t.Optional(t.String()) }) })
+  }, { body: t.Object({ name: t.String({ maxLength: 200 }), description: t.Optional(t.String({ maxLength: 5000 })), categoryId: t.Optional(t.String({ maxLength: 64 })) }) })
   .get("/products/:id", async ({ params, cookie }) => {
     const csrfToken = ensureCsrfToken(cookie);
     const detail = await uc.getProductDetail(params.id);
@@ -32,13 +33,13 @@ export const catalogAdminRoutes = new Elysia({ prefix: "/admin" })
   .post("/products/:id", async ({ params, body }) => {
     await uc.updateProductUseCase(params.id, { name: body.name, description: body.description, categoryId: body.categoryId || undefined });
     return new Response(null, { status: 302, headers: { Location: `/admin/products/${params.id}` } });
-  }, { body: t.Object({ name: t.String(), description: t.Optional(t.String()), categoryId: t.Optional(t.String()) }) })
+  }, { body: t.Object({ name: t.String({ maxLength: 200 }), description: t.Optional(t.String({ maxLength: 5000 })), categoryId: t.Optional(t.String({ maxLength: 64 })) }) })
   .post("/products/:id/publish", async ({ params }) => {
     try {
       await uc.changeProductStatusUseCase(params.id, "published");
       return `<div class="toast toast-success">Product published</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
   })
   .post("/products/:id/archive", async ({ params }) => {
@@ -57,13 +58,13 @@ export const catalogAdminRoutes = new Elysia({ prefix: "/admin" })
       });
       return new Response(null, { status: 302, headers: { Location: `/admin/products/${params.id}` } });
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ sku: t.String(), variantLabel: t.Optional(t.String()), priceCents: t.String(), currency: t.Optional(t.String()), compareAtPriceCents: t.Optional(t.String()) }) })
+  }, { body: t.Object({ sku: t.String({ maxLength: 50 }), variantLabel: t.Optional(t.String({ maxLength: 100 })), priceCents: t.String({ maxLength: 10 }), currency: t.Optional(t.String({ maxLength: 3 })), compareAtPriceCents: t.Optional(t.String({ maxLength: 10 })) }) })
   .post("/products/:id/attributes", async ({ params, body }) => {
     await uc.setProductAttributeUseCase(params.id, body.attributeId, body.value);
     return new Response(null, { status: 302, headers: { Location: `/admin/products/${params.id}` } });
-  }, { body: t.Object({ attributeId: t.String(), value: t.String() }) })
+  }, { body: t.Object({ attributeId: t.String({ maxLength: 64 }), value: t.String({ maxLength: 500 }) }) })
   .get("/categories", async ({ cookie }) => {
     const csrfToken = ensureCsrfToken(cookie);
     const categories = await uc.getCategoryList();
@@ -81,9 +82,9 @@ export const catalogAdminRoutes = new Elysia({ prefix: "/admin" })
       await uc.createCategoryUseCase({ name: body.name, parentId: body.parentId || undefined, description: body.description });
       return new Response(null, { status: 302, headers: { Location: "/admin/categories" } });
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ name: t.String(), parentId: t.Optional(t.String()), description: t.Optional(t.String()) }) })
+  }, { body: t.Object({ name: t.String({ maxLength: 200 }), parentId: t.Optional(t.String({ maxLength: 64 })), description: t.Optional(t.String({ maxLength: 2000 })) }) })
   .get("/categories/:id", async ({ params, cookie }) => {
     const csrfToken = ensureCsrfToken(cookie);
     const detail = await uc.getCategoryDetail(params.id);
@@ -95,7 +96,7 @@ export const catalogAdminRoutes = new Elysia({ prefix: "/admin" })
   .post("/categories/:id", async ({ params, body }) => {
     await uc.updateCategoryUseCase(params.id, { name: body.name, description: body.description });
     return new Response(null, { status: 302, headers: { Location: "/admin/categories" } });
-  }, { body: t.Object({ name: t.String(), description: t.Optional(t.String()) }) })
+  }, { body: t.Object({ name: t.String({ maxLength: 200 }), description: t.Optional(t.String({ maxLength: 2000 })) }) })
   .post("/categories/:id/delete", async ({ params }) => {
     await uc.deleteCategoryUseCase(params.id);
     return new Response(null, { status: 302, headers: { Location: "/admin/categories" } });

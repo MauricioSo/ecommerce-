@@ -10,7 +10,7 @@ class MockProvider implements PaymentProvider {
   async createIntent(): Promise<PaymentProviderResult> {
     return { success: true, providerIntentId: "mock_123", status: "approved" };
   }
-  parseWebhook(): WebhookEvent | null {
+  async parseWebhook(): Promise<WebhookEvent | null> {
     return null;
   }
 }
@@ -102,7 +102,7 @@ describe("MP signature - verifySignature rechaza firmas invalidas", () => {
     const { MercadoPagoProvider } = await import("../src/modules/payments/infrastructure/mercadopago-provider.ts");
     const provider = new MercadoPagoProvider("test-token", "test-secret", "test-pk", "http://localhost:3000");
 
-    const result = provider.parseWebhook(
+    const result = await provider.parseWebhook(
       JSON.stringify({ action: "payment.created", data: { id: "123" } }),
       "ts=1234567890,v1=somefakesignature",
       undefined,
@@ -115,7 +115,7 @@ describe("MP signature - verifySignature rechaza firmas invalidas", () => {
     const { MercadoPagoProvider } = await import("../src/modules/payments/infrastructure/mercadopago-provider.ts");
     const provider = new MercadoPagoProvider("test-token", "test-secret", "test-pk", "http://localhost:3000");
 
-    const result = provider.parseWebhook(
+    const result = await provider.parseWebhook(
       JSON.stringify({ action: "payment.created", data: { id: "123" } }),
       "ts=1234567890,v1=fakesignature1234567890abcdef1234567890abcdef",
       "req-id-123",
@@ -128,7 +128,7 @@ describe("MP signature - verifySignature rechaza firmas invalidas", () => {
     const { MercadoPagoProvider } = await import("../src/modules/payments/infrastructure/mercadopago-provider.ts");
     const provider = new MercadoPagoProvider("test-token", "test-secret", "test-pk", "http://localhost:3000");
 
-    const result = provider.parseWebhook(
+    const result = await provider.parseWebhook(
       JSON.stringify({ action: "payment.created", data: { id: "123" } }),
       null,
       "req-id-123",

@@ -57,7 +57,7 @@ export class WebPayProvider implements PaymentProvider {
         buy_order: buyOrder,
         session_id: sessionId,
         amount,
-        return_url: `${this.siteBaseUrl}/checkout/return/webpay?order_id=${input.orderId}`,
+        return_url: `${this.siteBaseUrl}/checkout/return/webpay`,
       }),
     });
 
@@ -114,15 +114,16 @@ export class WebPayProvider implements PaymentProvider {
     return response.ok;
   }
 
-  parseWebhook(body: string, _signature: string | null): WebhookEvent | null {
+  async parseWebhook(body: string, signature: string | null): Promise<WebhookEvent | null> {
+    if (!(await this.verifyWebhookSignature(body, signature))) return null;
     try {
       const data = JSON.parse(body) as Record<string, unknown>;
       const token = data.token_ws as string | undefined;
       if (!token) return null;
       return {
         eventType: "webpay_commit",
-        providerEventId: `tbk_${token}`,
-        orderId: (data.order_id as string) ?? "",
+        providerEventId: `webpay_commit_${token}`,
+        orderId: "",
         attemptId: "",
         status: "pending",
         amountCents: 0,
@@ -132,6 +133,29 @@ export class WebPayProvider implements PaymentProvider {
       };
     } catch {
       return null;
+    }
+  }
+
+  private async verifyWebhookSignature(body: string, signature: string | null): Promise<boolean> {
+    if (!this.apiKey) return false;
+    if (!signature) return false;
+    try {
+      const value = signature.startsWith("sha256=") ? signature.slice("sha256=".length) : signature;
+      const key = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(this.apiKey),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"],
+      );
+      const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
+      const expected = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+      if (value.length !== expected.length) return false;
+      let diff = 0;
+      for (let i = 0; i < expected.length; i++) diff |= value.charCodeAt(i) ^ expected.charCodeAt(i);
+      return diff === 0;
+    } catch {
+      return false;
     }
   }
 }

@@ -2,11 +2,7 @@ import Elysia from "elysia";
 import { getConfig } from "../../shared/infrastructure/config.ts";
 
 export const securityHeadersPlugin = new Elysia({ name: "security-headers" })
-  .derive(() => {
-    const nonce = crypto.randomUUID().replace(/-/g, "");
-    return { nonce };
-  })
-  .onBeforeHandle(({ set, nonce }) => {
+  .onAfterHandle(({ set }) => {
     const isProd = getConfig().NODE_ENV === "production";
     set.headers["X-Content-Type-Options"] = "nosniff";
     set.headers["X-Frame-Options"] = "DENY";
@@ -16,7 +12,7 @@ export const securityHeadersPlugin = new Elysia({ name: "security-headers" })
     set.headers["X-Permitted-Cross-Domain-Policies"] = "none";
     set.headers["Content-Security-Policy"] = [
       "default-src 'self'",
-      `script-src 'self' https://unpkg.com 'nonce-${nonce}'`,
+      `script-src 'self'`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https:",
@@ -24,4 +20,8 @@ export const securityHeadersPlugin = new Elysia({ name: "security-headers" })
       "frame-ancestors 'none'",
       isProd ? "upgrade-insecure-requests" : "",
     ].filter(Boolean).join("; ");
-  });
+    if (isProd) {
+      set.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
+    }
+  })
+  .as("global");

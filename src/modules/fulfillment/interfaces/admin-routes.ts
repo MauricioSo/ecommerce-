@@ -4,6 +4,7 @@ import * as uc from "../application/use-cases.ts";
 import * as trackingUc from "../application/tracking-use-cases.ts";
 
 import { ensureCsrfToken } from "../../../web/helpers/csrf.ts";
+import { escapeHtml } from "../../../web/helpers/escape.ts";
 
 export const fulfillmentAdminRoutes = new Elysia({ prefix: "/admin/fulfillment" })
   .get("/shipments/:orderId", async ({ params, cookie }) => {
@@ -18,17 +19,17 @@ export const fulfillmentAdminRoutes = new Elysia({ prefix: "/admin/fulfillment" 
       await trackingUc.createShipmentWithEventUseCase({ orderId: body.orderId, carrier: body.carrier || undefined });
       return new Response(null, { status: 302, headers: { Location: `/admin/orders/${body.orderId}` } });
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ orderId: t.String(), carrier: t.Optional(t.String()) }) })
+  }, { body: t.Object({ orderId: t.String({ maxLength: 64 }), carrier: t.Optional(t.String({ maxLength: 100 })) }) })
   .post("/shipments/:id/status", async ({ params, body }) => {
     try {
       await trackingUc.updateShipmentStatusUseCase(params.id, body.targetStatus as any);
-      return `<div class="toast toast-success">Shipment updated to ${body.targetStatus}</div>`;
+      return `<div class="toast toast-success">Shipment updated to ${escapeHtml(body.targetStatus)}</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
-  }, { body: t.Object({ targetStatus: t.String() }) })
+  }, { body: t.Object({ targetStatus: t.String({ maxLength: 30 }) }) })
   .post("/shipments/:id/tracking", async ({ params, body }) => {
     try {
       await trackingUc.updateShipmentTrackingUseCase({
@@ -39,13 +40,13 @@ export const fulfillmentAdminRoutes = new Elysia({ prefix: "/admin/fulfillment" 
       });
       return `<div class="toast toast-success">Tracking updated</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
   }, { body: t.Object({
-    trackingCode: t.String(),
-    trackingUrl: t.Optional(t.String()),
-    carrier: t.Optional(t.String()),
-    estimatedDeliveryDate: t.Optional(t.String()),
+    trackingCode: t.String({ maxLength: 100 }),
+    trackingUrl: t.Optional(t.String({ maxLength: 2048 })),
+    carrier: t.Optional(t.String({ maxLength: 100 })),
+    estimatedDeliveryDate: t.Optional(t.String({ maxLength: 30 })),
   }) })
   .get("/returns", async ({ cookie }) => {
     const csrfToken = ensureCsrfToken(cookie);
@@ -58,7 +59,7 @@ export const fulfillmentAdminRoutes = new Elysia({ prefix: "/admin/fulfillment" 
       await uc.approveReturnUseCase(params.id);
       return `<div class="toast toast-success">Return approved</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
   })
   .post("/returns/:id/reject", async ({ params }) => {
@@ -66,6 +67,6 @@ export const fulfillmentAdminRoutes = new Elysia({ prefix: "/admin/fulfillment" 
       await uc.rejectReturnUseCase(params.id);
       return `<div class="toast toast-success">Return rejected</div>`;
     } catch (e) {
-      return `<div class="toast toast-error">${(e as Error).message}</div>`;
+      return `<div class="toast toast-error">${escapeHtml((e as Error).message)}</div>`;
     }
   });
