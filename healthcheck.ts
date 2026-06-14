@@ -1,4 +1,5 @@
-const response = await fetch("http://localhost:3000/health/live");
+const port = process.env.PORT ?? "3000";
+const response = await fetch(`http://localhost:${port}/health/live`);
 if (response.ok) {
   process.exit(0);
 } else {

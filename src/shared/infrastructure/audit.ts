@@ -2,22 +2,21 @@ import { getDb } from "../infrastructure/db/index.ts";
 import * as s from "../infrastructure/db/schema.ts";
 import { createAuditEvent } from "../../domain/audit/index.ts";
 
-export async function writeAuditEvent(input: {
-  aggregateType: string;
-  aggregateId: string;
-  eventType: string;
-  payload?: Record<string, unknown>;
-  actorId?: string;
-  correlationId?: string;
-}): Promise<void> {
-  const event = createAuditEvent(input);
-  await getDb().insert(s.auditEvents).values({
-    id: event.id,
-    aggregateType: event.aggregateType,
-    aggregateId: event.aggregateId,
-    eventType: event.eventType,
-    payload: event.payload,
-    actorId: event.actorId,
-    correlationId: event.correlationId,
-  });
+export type AuditEventInput = Parameters<typeof createAuditEvent>[0];
+
+export function auditEventRow(input: AuditEventInput) {
+  const e = createAuditEvent(input);
+  return {
+    id: e.id,
+    aggregateType: e.aggregateType,
+    aggregateId: e.aggregateId,
+    eventType: e.eventType,
+    payload: e.payload,
+    actorId: e.actorId,
+    correlationId: e.correlationId,
+  };
+}
+
+export async function writeAuditEvent(input: AuditEventInput): Promise<void> {
+  await getDb().insert(s.auditEvents).values(auditEventRow(input));
 }

@@ -1,0 +1,50 @@
+import { pgTable, uuid, varchar, integer, timestamp, jsonb, text, index } from "drizzle-orm/pg-core";
+
+export const orders = pgTable("orders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  checkoutSessionId: uuid("checkout_session_id"),
+  publicToken: varchar("public_token", { length: 255 }).notNull().unique(),
+  customerId: uuid("customer_id"),
+  customerEmail: varchar("customer_email", { length: 320 }),
+  status: varchar("status", { length: 30 }).default("pending").notNull(),
+  subtotalCents: integer("subtotal_cents").notNull(),
+  discountCents: integer("discount_cents").default(0).notNull(),
+  shippingCostCents: integer("shipping_cost_cents").default(0).notNull(),
+  taxCents: integer("tax_cents").default(0).notNull(),
+  totalCents: integer("total_cents").notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+  shippingAddress: jsonb("shipping_address"),
+  billingAddress: jsonb("billing_address"),
+  shippingMethod: varchar("shipping_method", { length: 100 }),
+  snapshot: jsonb("snapshot"),
+  countryCode: varchar("country_code", { length: 3 }),
+  locale: varchar("locale", { length: 10 }).default("es"),
+  notes: text("notes"),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  cancellationReason: varchar("cancellation_reason", { length: 255 }),
+  fulfilledAt: timestamp("fulfilled_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("idx_orders_status").on(table.status),
+  index("idx_orders_customer").on(table.customerId),
+  index("idx_orders_email").on(table.customerEmail),
+  index("idx_orders_checkout_session").on(table.checkoutSessionId),
+  index("idx_orders_public_token").on(table.publicToken),
+  index("idx_orders_customer_created").on(table.customerId, table.createdAt),
+]);
+
+export const orderItems = pgTable("order_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderId: uuid("order_id").references(() => orders.id, { onDelete: "cascade" }).notNull(),
+  skuId: uuid("sku_id").notNull(),
+  productId: uuid("product_id"),
+  productName: varchar("product_name", { length: 500 }).notNull(),
+  variantLabel: varchar("variant_label", { length: 255 }),
+  quantity: integer("quantity").notNull(),
+  unitPriceCents: integer("unit_price_cents").notNull(),
+  totalPriceCents: integer("total_price_cents").notNull(),
+  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
+}, (table) => [
+  index("idx_order_items_order").on(table.orderId),
+]);
