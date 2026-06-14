@@ -1,5 +1,5 @@
-import { seedTaxRules } from "../src/modules/pricing/application/tax-use-cases.ts";
-import { seedShippingData } from "../src/modules/pricing/application/shipping-use-cases.ts";
+import { seedTaxRules } from "../src/application/pricing/tax-use-cases.ts";
+import { seedShippingData } from "../src/application/pricing/shipping-use-cases.ts";
 
 async function main() {
   console.log("Seeding tax rules...");

@@ -7,15 +7,15 @@ import {
   getAvailableStock,
   createReservation,
   type InventoryItem,
-} from "../src/modules/inventory/domain/entities.ts";
-import { canTransitionTo as orderCanTransition, ORDER_TRANSITIONS } from "../src/modules/orders/domain/types.ts";
-import { canTransitionTo as paymentCanTransition, PAYMENT_TRANSITIONS } from "../src/modules/payments/domain/types.ts";
-import { canTransitionTo as shipmentCanTransition } from "../src/modules/fulfillment/domain/types.ts";
+} from "../src/domain/inventory/entities.ts";
+import { canTransitionTo as orderCanTransition, ORDER_TRANSITIONS } from "../src/domain/orders/types.ts";
+import { canTransitionTo as paymentCanTransition, PAYMENT_TRANSITIONS } from "../src/domain/payments/types.ts";
+import { canTransitionTo as shipmentCanTransition } from "../src/domain/fulfillment/types.ts";
 import {
   createShipment,
   createReturnRequest,
   approveReturn,
-} from "../src/modules/fulfillment/domain/entities.ts";
+} from "../src/domain/fulfillment/entities.ts";
 import {
   createOutboxEvent,
   markCompleted,

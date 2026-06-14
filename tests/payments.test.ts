@@ -1,8 +1,8 @@
 import { describe, test, expect } from "bun:test";
-import { MockPaymentProvider } from "../src/modules/payments/application/provider.ts";
-import { MercadoPagoProvider } from "../src/modules/payments/infrastructure/mercadopago-provider.ts";
-import { WebPayProvider } from "../src/modules/payments/infrastructure/webpay-provider.ts";
-import { isWebhookIpAllowed } from "../src/modules/payments/interfaces/routes.ts";
+import { MockPaymentProvider } from "../src/application/payments/provider.ts";
+import { MercadoPagoProvider } from "../src/infrastructure/payments/mercadopago-provider.ts";
+import { WebPayProvider } from "../src/infrastructure/payments/webpay-provider.ts";
+import { isWebhookIpAllowed } from "../src/presentation/payments/routes.ts";
 import { resetConfig } from "../src/shared/infrastructure/config.ts";
 
 describe("MockPaymentProvider", () => {

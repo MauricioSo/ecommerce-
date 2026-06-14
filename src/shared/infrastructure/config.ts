@@ -19,6 +19,13 @@ const envSchema = z.object({
   PAYMENT_WEBHOOK_IP_ALLOWLIST: z.string().default(""),
   BASE_URL: z.string().default("http://localhost:3000"),
   APP_VERSION: z.string().default("1.0.0"),
+  STYLIST_AI_ENABLED: z.preprocess((value) => value === true || value === "true" || value === "1", z.boolean()).default(false),
+  STYLIST_AI_PROVIDER: z.enum(["claude", "deepseek"]).default("claude"),
+  DEEPSEEK_API_KEY: z.string().default(""),
+  ANTHROPIC_API_KEY: z.string().default(""),
+  ADMIN_EMAIL: z.string().default(""),
+  ADMIN_PASSWORD: z.string().default(""),
+  RATE_LIMIT_SCALE: z.coerce.number().default(1),
 }).refine(
   (data) => {
     if (data.NODE_ENV === "production" || data.NODE_ENV === "staging") {

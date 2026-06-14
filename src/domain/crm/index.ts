@@ -1,0 +1,31 @@
+export {
+  type CrmCustomerStatus,
+  type CrmTaskStatus,
+  type CrmTaskPriority,
+  type CrmTaskType,
+  type CrmInteractionChannel,
+  type CrmInteractionDirection,
+  type CrmNoteVisibility,
+  VALID_CUSTOMER_STATUSES,
+  VALID_TASK_STATUSES,
+  VALID_TASK_PRIORITIES,
+  VALID_TASK_TYPES,
+  VALID_INTERACTION_CHANNELS,
+  VALID_INTERACTION_DIRECTIONS,
+  isValidTaskStatus,
+  isValidTaskPriority,
+  isValidTaskType,
+  isValidInteractionChannel,
+  isValidInteractionDirection,
+} from "./types.ts";
+
+export {
+  type CustomerNote,
+  type CrmTag,
+  type CustomerTag,
+  type CrmTask,
+  type CrmInteraction,
+  type CrmCustomerProfile,
+  type CustomerCockpit,
+  type CrmCustomerListItem,
+} from "./entities.ts";

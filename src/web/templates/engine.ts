@@ -1,12 +1,13 @@
 import { Eta } from "eta";
 import { existsSync } from "fs";
 import { join, resolve } from "path";
+import { getConfig } from "../../shared/infrastructure/config.ts";
 
 const VIEWS_DIR = resolve(import.meta.dir);
 
 const eta = new Eta({
   views: VIEWS_DIR,
-  cache: process.env.NODE_ENV === "production",
+  cache: getConfig().NODE_ENV === "production",
   autoEscape: true,
 });
 

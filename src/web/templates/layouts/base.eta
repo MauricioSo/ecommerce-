@@ -20,6 +20,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/stylist.css">
   <script src="/static/js/htmx.min.js"></script>
   <script src="/static/js/main.js"></script>
 </head>
@@ -55,6 +56,58 @@
   <main>
     <%~ it.body %>
   </main>
+  <!-- Stylist FAB -->
+  <button id="stylist-fab" aria-label="Abrir estilista de moda">
+    <span class="fab-icon">✨</span>
+    <span>Estilista IA</span>
+  </button>
+
+  <!-- Stylist Modal -->
+  <div id="stylist-modal" role="dialog" aria-label="Asistente de moda">
+    <div class="stylist-header">
+      <div>
+        <div class="stylist-header-title">✨ Tu Estilista Personal</div>
+        <div class="stylist-header-sub">Recomendaciones con IA · Productos reales</div>
+      </div>
+      <button class="stylist-close" id="stylist-close" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="stylist-messages" id="stylist-messages">
+      <div class="stylist-welcome">
+        <div class="welcome-icon">✨</div>
+        <p><strong>¡Hola! Soy tu estilista personal.</strong></p>
+        <p>Cuéntame tu objetivo o sube una foto y te armaré looks con productos de nuestra tienda.</p>
+      </div>
+    </div>
+    <div class="stylist-quick-prompts">
+      <button class="quick-prompt-btn" data-prompt="Quiero un look casual para el fin de semana, algo cómodo y moderno">Casual fin de semana</button>
+      <button class="quick-prompt-btn" data-prompt="Necesito un traje formal para una entrevista de trabajo">Formal para trabajo</button>
+      <button class="quick-prompt-btn" data-prompt="Busco un outfit para una boda, quiero verme elegante y estilizado">Look para boda</button>
+      <button class="quick-prompt-btn" data-prompt="Quiero looks que me hagan ver más delgado y estilizado">Más estilizado</button>
+    </div>
+    <div class="stylist-input-area">
+      <div class="stylist-tools">
+        <button class="stylist-photo-btn" id="stylist-photo-btn" type="button">📷 Subir foto</button>
+        <input type="file" id="stylist-photo-input" accept="image/*" style="display:none" capture="user">
+        <div class="stylist-photo-preview" id="stylist-photo-preview" style="display:none">
+          📷 <span id="stylist-photo-name"></span>
+          <button class="stylist-photo-remove" id="stylist-photo-remove" type="button">&times;</button>
+        </div>
+        <button class="stylist-reset-btn" id="stylist-reset" type="button">Reiniciar</button>
+      </div>
+      <div class="stylist-input-row">
+        <textarea
+          class="stylist-input"
+          id="stylist-input"
+          placeholder="Ej: Quiero un look elegante para una cena, presupuesto $50.000..."
+          rows="1"
+          maxlength="1000"
+        ></textarea>
+        <button class="stylist-send" id="stylist-send" type="button" aria-label="Enviar">➤</button>
+      </div>
+    </div>
+  </div>
+  <script src="/static/js/stylist.js"></script>
+
   <footer>
     <div class="footer-content">
       <div class="footer-section">

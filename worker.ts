@@ -1,11 +1,13 @@
 import { registerEventHandler, processOutboxBatch } from "./src/shared/infrastructure/outbox/worker.ts";
-import { handleOutboxEvent } from "./src/modules/notifications/application/outbox-handler.ts";
-import { expireReservationsJob } from "./src/modules/inventory/application/use-cases.ts";
-import { failStalePendingPayments, reconcileOrphanedPayments } from "./src/modules/payments/application/reconciliation.ts";
+import { createOutboxEventHandler } from "./src/application/notifications/outbox-handler.ts";
+import { getNotificationSender } from "./src/infrastructure/notifications/sender.ts";
+import { expireReservationsJob } from "./src/application/inventory/use-cases.ts";
+import { failStalePendingPayments, reconcileOrphanedPayments } from "./src/application/payments/reconciliation.ts";
 import { getConfig } from "./src/shared/infrastructure/config.ts";
 import { createLogger } from "./src/shared/infrastructure/logger/index.ts";
 
-registerEventHandler(handleOutboxEvent);
+const notificationSender = getNotificationSender();
+registerEventHandler(createOutboxEventHandler(notificationSender));
 
 const config = getConfig();
 const logger = createLogger(config.LOG_LEVEL);

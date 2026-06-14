@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from "bun:test";
 import { renderView } from "../src/web/templates/engine.ts";
-import { setPaymentProvider, type PaymentProvider, type PaymentProviderResult, type WebhookEvent } from "../src/modules/payments/application/provider.ts";
+import { setPaymentProvider, type PaymentProvider, type PaymentProviderResult, type WebhookEvent } from "../src/application/payments/provider.ts";
 
 if (!process.env.NODE_ENV) process.env.NODE_ENV = "development";
 if (!process.env.DATABASE_URL) process.env.DATABASE_URL = "postgres://localhost/test";
@@ -99,7 +99,7 @@ describe("CSRF - ensureCsrfToken", () => {
 
 describe("MP signature - verifySignature rechaza firmas invalidas", () => {
   test("sin requestId ni dataId rechaza webhook", async () => {
-    const { MercadoPagoProvider } = await import("../src/modules/payments/infrastructure/mercadopago-provider.ts");
+    const { MercadoPagoProvider } = await import("../src/infrastructure/payments/mercadopago-provider.ts");
     const provider = new MercadoPagoProvider("test-token", "test-secret", "test-pk", "http://localhost:3000");
 
     const result = await provider.parseWebhook(
@@ -112,7 +112,7 @@ describe("MP signature - verifySignature rechaza firmas invalidas", () => {
   });
 
   test("firma falsa con requestId y dataId rechaza", async () => {
-    const { MercadoPagoProvider } = await import("../src/modules/payments/infrastructure/mercadopago-provider.ts");
+    const { MercadoPagoProvider } = await import("../src/infrastructure/payments/mercadopago-provider.ts");
     const provider = new MercadoPagoProvider("test-token", "test-secret", "test-pk", "http://localhost:3000");
 
     const result = await provider.parseWebhook(
@@ -125,7 +125,7 @@ describe("MP signature - verifySignature rechaza firmas invalidas", () => {
   });
 
   test("sin signature rechaza", async () => {
-    const { MercadoPagoProvider } = await import("../src/modules/payments/infrastructure/mercadopago-provider.ts");
+    const { MercadoPagoProvider } = await import("../src/infrastructure/payments/mercadopago-provider.ts");
     const provider = new MercadoPagoProvider("test-token", "test-secret", "test-pk", "http://localhost:3000");
 
     const result = await provider.parseWebhook(

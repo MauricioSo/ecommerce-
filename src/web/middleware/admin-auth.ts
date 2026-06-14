@@ -1,17 +1,21 @@
 import { Elysia, t } from "elysia";
 import { renderView } from "../templates/engine.ts";
-import { authenticateAdminUseCase, createAdminSession, getAdminUserFromSession, revokeAdminSession, seedSuperAdmin } from "../../modules/admin/application/use-cases.ts";
-import { hasPermission } from "../../modules/admin/infrastructure/repository.ts";
+import { authenticateAdminUseCase, createAdminSession, getAdminUserFromSession, revokeAdminSession, seedSuperAdmin } from "../../application/admin/use-cases.ts";
+import { hasPermission } from "../../infrastructure/admin/repository.ts";
 import { type Permission } from "../../shared/infrastructure/db/schema.ts";
 import { ensureCsrfToken } from "../helpers/csrf.ts";
+import { getConfig } from "../../shared/infrastructure/config.ts";
+import { createLogger } from "../../shared/infrastructure/logger/index.ts";
 
-const ADMIN_BOOTSTRAP_EMAIL = process.env.ADMIN_EMAIL;
-const ADMIN_BOOTSTRAP_PASSWORD = process.env.ADMIN_PASSWORD;
-const SHOULD_BOOTSTRAP_ADMIN = process.env.NODE_ENV !== "production" && Boolean(ADMIN_BOOTSTRAP_EMAIL && ADMIN_BOOTSTRAP_PASSWORD);
+const adminLogger = createLogger();
+const config = getConfig();
+const ADMIN_BOOTSTRAP_EMAIL = config.NODE_ENV !== "production" ? config.ADMIN_EMAIL : undefined;
+const ADMIN_BOOTSTRAP_PASSWORD = config.NODE_ENV !== "production" ? config.ADMIN_PASSWORD : undefined;
+const SHOULD_BOOTSTRAP_ADMIN = config.NODE_ENV !== "production" && Boolean(ADMIN_BOOTSTRAP_EMAIL && ADMIN_BOOTSTRAP_PASSWORD);
 
 if (SHOULD_BOOTSTRAP_ADMIN && ADMIN_BOOTSTRAP_EMAIL && ADMIN_BOOTSTRAP_PASSWORD) {
   seedSuperAdmin(ADMIN_BOOTSTRAP_EMAIL, ADMIN_BOOTSTRAP_PASSWORD).catch((e) => {
-    console.error("Failed to seed super admin:", e instanceof Error ? e.message : String(e));
+    adminLogger.error("Failed to seed super admin:", { error: e instanceof Error ? e.message : String(e) });
   });
 }
 

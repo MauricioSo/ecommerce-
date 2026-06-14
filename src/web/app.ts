@@ -4,23 +4,24 @@ import { html } from "@elysiajs/html";
 import { getConfig } from "../shared/infrastructure/config.ts";
 import { createLogger, runWithContext, type LogContext } from "../shared/infrastructure/logger/index.ts";
 import { renderView } from "./templates/engine.ts";
-import { catalogAdminRoutes } from "../modules/catalog/interfaces/admin-routes.ts";
-import { inventoryAdminRoutes } from "../modules/inventory/interfaces/admin-routes.ts";
-import { pricingAdminRoutes } from "../modules/pricing/interfaces/admin-routes.ts";
-import { checkoutStorefrontRoutes } from "../modules/checkout/interfaces/storefront-routes.ts";
-import { paymentWebhookRoutes, paymentAdminRoutes } from "../modules/payments/interfaces/routes.ts";
-import { paymentReturnRoutes } from "../modules/payments/interfaces/return-routes.ts";
-import { orderAdminRoutes } from "../modules/orders/interfaces/admin-routes.ts";
-import { orderStorefrontRoutes } from "../modules/orders/interfaces/storefront-routes.ts";
-import { getDashboardDataUseCase } from "../modules/orders/application/use-cases.ts";
+import { catalogAdminRoutes } from "../presentation/catalog/admin-routes.ts";
+import { inventoryAdminRoutes } from "../presentation/inventory/admin-routes.ts";
+import { pricingAdminRoutes } from "../presentation/pricing/admin-routes.ts";
+import { checkoutStorefrontRoutes } from "../presentation/checkout/storefront-routes.ts";
+import { paymentWebhookRoutes, paymentAdminRoutes } from "../presentation/payments/routes.ts";
+import { paymentReturnRoutes } from "../presentation/payments/return-routes.ts";
+import { orderAdminRoutes } from "../presentation/orders/admin-routes.ts";
+import { orderStorefrontRoutes } from "../presentation/orders/storefront-routes.ts";
+import { getDashboardDataUseCase } from "../application/orders/use-cases.ts";
 import { adminAuthPlugin, adminLoginRoutes } from "./middleware/admin-auth.ts";
 import { storefrontRoutes } from "./routes/storefront.ts";
-import { fulfillmentAdminRoutes } from "../modules/fulfillment/interfaces/admin-routes.ts";
-import { crmAdminRoutes } from "../modules/crm/interfaces/admin-routes.ts";
-import { fulfillmentStorefrontRoutes } from "../modules/fulfillment/interfaces/storefront-routes.ts";
+import { fulfillmentAdminRoutes } from "../presentation/fulfillment/admin-routes.ts";
+import { crmAdminRoutes } from "../presentation/crm/admin-routes.ts";
+import { stylistStorefrontRoutes } from "./composition/stylist.ts";
+import { fulfillmentStorefrontRoutes } from "../presentation/fulfillment/storefront-routes.ts";
 import { customerSessionPlugin } from "./middleware/customer-session.ts";
-import { storefrontAuthRoutes } from "../modules/customers/interfaces/storefront-auth-routes.ts";
-import { storefrontAccountRoutes } from "../modules/customers/interfaces/storefront-account-routes.ts";
+import { storefrontAuthRoutes } from "../presentation/customers/storefront-auth-routes.ts";
+import { storefrontAccountRoutes } from "../presentation/customers/storefront-account-routes.ts";
 import { securityHeadersPlugin } from "./middleware/security-headers.ts";
 import { rateLimitPlugin } from "./middleware/rate-limit.ts";
 import { csrfPlugin } from "./middleware/csrf.ts";
@@ -28,6 +29,7 @@ import { ensureCsrfToken } from "./helpers/csrf.ts";
 import { sanitizeInputPlugin } from "./middleware/sanitize-input.ts";
 import { metrics, recordHttpRequest } from "../shared/infrastructure/metrics.ts";
 import { getPool } from "../shared/infrastructure/db/index.ts";
+import "./composition/payments.ts";
 
 const config = getConfig();
 const logger = createLogger(config.LOG_LEVEL);
@@ -115,6 +117,7 @@ export function createApp() {
     .use(paymentReturnRoutes)
     .use(orderStorefrontRoutes)
     .use(fulfillmentStorefrontRoutes)
+    .use(stylistStorefrontRoutes)
     .use(adminLoginRoutes)
     .use(adminAuthPlugin)
     .get("/admin", async ({ cookie }) => {

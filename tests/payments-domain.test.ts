@@ -10,7 +10,7 @@ import {
   isPaymentApproved,
   isPaymentTerminal,
   createRefund,
-} from "../src/modules/payments/domain/entities.ts";
+} from "../src/domain/payments/entities.ts";
 
 function makeAttempt() {
   return createPaymentAttempt({

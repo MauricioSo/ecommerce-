@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { verifyCustomerSession } from "../../modules/customers/application/auth-use-cases.ts";
+import { verifyCustomerSession } from "../../application/customers/auth-use-cases.ts";
 
 export type CustomerInfo = {
   customerId: string;

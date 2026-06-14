@@ -8,7 +8,7 @@
     "start": "bun run index.ts",
     "worker": "bun run worker.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "bun run run-migration.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
@@ -25,6 +25,7 @@
     "typescript": "^6.0.3"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.1",
     "@elysiajs/cookie": "^0.8.0",
     "@elysiajs/html": "^1.4.0",
     "@elysiajs/jwt": "^1.4.1",

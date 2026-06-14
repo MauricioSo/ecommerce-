@@ -1,7 +1,7 @@
 import { describe, test, expect } from "bun:test";
-import { createReservation, isReservationExpired, reserveStock, createInventoryItem, releaseReservation, expireReservation } from "../src/modules/inventory/domain/entities.ts";
-import { ReservationStatus as RS } from "../src/modules/inventory/domain/types.ts";
-import { OrderStatus, canTransitionTo } from "../src/modules/orders/domain/types.ts";
+import { createReservation, isReservationExpired, reserveStock, createInventoryItem, releaseReservation, expireReservation } from "../src/domain/inventory/entities.ts";
+import { ReservationStatus as RS } from "../src/domain/inventory/types.ts";
+import { OrderStatus, canTransitionTo } from "../src/domain/orders/types.ts";
 import { signCookieValue, verifySignedCookieValue } from "../src/web/helpers/signed-cookie.ts";
 
 describe("Inventory reservation expiry", () => {
@@ -70,17 +70,17 @@ describe("Inventory stock operations", () => {
 
 describe("Cart quantity limits", () => {
   test("max quantity constant is 10", async () => {
-    const mod = await import("../src/modules/checkout/application/use-cases.ts");
+    const mod = await import("../src/application/checkout/use-cases.ts");
     expect(mod.MAX_QUANTITY_PER_SKU).toBe(10);
   });
 
   test("max cart items constant is 20", async () => {
-    const mod = await import("../src/modules/checkout/application/use-cases.ts");
+    const mod = await import("../src/application/checkout/use-cases.ts");
     expect(mod.MAX_CART_ITEMS).toBe(20);
   });
 
   test("checkout timeout is 30 minutes", async () => {
-    const mod = await import("../src/modules/checkout/application/use-cases.ts");
+    const mod = await import("../src/application/checkout/use-cases.ts");
     expect(mod.CHECKOUT_TIMEOUT_MS).toBe(30 * 60 * 1000);
   });
 });

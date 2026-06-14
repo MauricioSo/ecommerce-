@@ -8,8 +8,8 @@ import {
   expireReservation,
   getAvailableStock,
   transitionReservation,
-} from "../src/modules/inventory/domain/entities.ts";
-import { ReservationStatus as RS } from "../src/modules/inventory/domain/types.ts";
+} from "../src/domain/inventory/entities.ts";
+import { ReservationStatus as RS } from "../src/domain/inventory/types.ts";
 
 describe("Inventory - InventoryItem", () => {
   test("createInventoryItem with default values", () => {

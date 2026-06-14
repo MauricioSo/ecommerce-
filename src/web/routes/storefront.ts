@@ -1,18 +1,15 @@
 import { Elysia } from "elysia";
 import { renderView } from "../../web/templates/engine.ts";
-import { getCategoryList } from "../../modules/catalog/application/use-cases.ts";
-import { searchProductsUseCase, searchAutocompleteUseCase, getProductListPage } from "../../modules/catalog/application/search-use-cases.ts";
-import * as catalogRepo from "../../modules/catalog/infrastructure/repository.ts";
-import * as inventoryRepo from "../../modules/inventory/infrastructure/repository.ts";
-import { getCartItemCount } from "../../modules/checkout/application/use-cases.ts";
+import { getCategoryList, getPublishedProductsForSitemap, getProductDetailPage } from "../../application/catalog/use-cases.ts";
+import { searchProductsUseCase, searchAutocompleteUseCase, getProductListPage } from "../../application/catalog/search-use-cases.ts";
+import { getCartItemCount } from "../../application/checkout/use-cases.ts";
 import { sanitizeHtml } from "../../web/middleware/sanitize.ts";
 import { ensureCsrfToken } from "../../web/helpers/csrf.ts";
 import { escapeHtml } from "../../web/helpers/escape.ts";
-import { getDb } from "../../shared/infrastructure/db/index.ts";
-import * as s from "../../shared/infrastructure/db/schema.ts";
-import { eq, desc } from "drizzle-orm";
 import { CustomerSession } from "../../web/middleware/customer-session.ts";
 import { verifySignedCookieValue } from "../../web/helpers/signed-cookie.ts";
+import { getConfig } from "../../shared/infrastructure/config.ts";
+import { catalogSearchReadModel } from "../composition/catalog.ts";
 
 async function resolveSessionContext(cookie: Record<string, { value: unknown }>) {
   const customer = await CustomerSession.resolve(cookie);
@@ -25,7 +22,7 @@ export const storefrontRoutes = new Elysia()
   .get("/", async ({ cookie }) => {
     const csrfToken = ensureCsrfToken(cookie);
     const { customer, cartCount } = await resolveSessionContext(cookie as Record<string, { value: unknown }>);
-    const result = await searchProductsUseCase({ sortBy: "newest", pageSize: 8 });
+    const result = await searchProductsUseCase({ sortBy: "newest", pageSize: 8 }, catalogSearchReadModel);
     const categories = await getCategoryList();
     const body = renderView("pages/storefront/home.eta", { products: result.items, categories, csrfToken });
     return renderView("layouts/base.eta", { body, title: "Home", cartCount, customer, csrfToken });
@@ -45,7 +42,7 @@ export const storefrontRoutes = new Elysia()
       minPriceCents: q.minPrice ? parseInt(q.minPrice, 10) : undefined,
       maxPriceCents: q.maxPrice ? parseInt(q.maxPrice, 10) : undefined,
       inStock: q.inStock === "1",
-    });
+    }, catalogSearchReadModel);
     const body = renderView("pages/storefront/plp.eta", {
       category,
       products: result.items,
@@ -61,47 +58,33 @@ export const storefrontRoutes = new Elysia()
   .get("/products/:slug", async ({ params, cookie }) => {
     const csrfToken = ensureCsrfToken(cookie);
     const { customer, cartCount } = await resolveSessionContext(cookie as Record<string, { value: unknown }>);
-    const product = await catalogRepo.findProductBySlug(params.slug);
-    if (!product || product.editorialStatus !== "published") return new Response("Product not found", { status: 404 });
-    const skus = await catalogRepo.findSkusByProductId(product.id);
-    const attributes = await catalogRepo.findProductAttributes(product.id);
-    const category = product.categoryId ? await catalogRepo.findCategoryById(product.categoryId) : null;
+    const pdp = await getProductDetailPage(params.slug);
+    if (!pdp) return new Response("Product not found", { status: 404 });
     const categories = await getCategoryList();
-
-    const skuAvailability: { skuId: string; available: number }[] = [];
-    let totalStock = 0;
-    for (const sku of skus) {
-      const inv = await inventoryRepo.findInventoryBySkuId(sku.id);
-      const available = inv ? Math.max(0, inv.physicalStock - inv.reservedStock + inv.adjustedStock) : 0;
-      totalStock += available;
-      skuAvailability.push({ skuId: sku.id, available });
-    }
-
-    const relatedResult = product.categoryId
-      ? await searchProductsUseCase({ categoryId: product.categoryId, pageSize: 4 })
+    const relatedResult = pdp.product.categoryId
+      ? await searchProductsUseCase({ categoryId: pdp.product.categoryId, pageSize: 4 }, catalogSearchReadModel)
       : { items: [] };
-
     const body = renderView("pages/storefront/pdp.eta", {
-      product,
-      skus,
-      attributes,
-      category,
+      product: pdp.product,
+      skus: pdp.skus,
+      attributes: pdp.attributes,
+      category: pdp.category,
       categories,
-      skuAvailability,
-      totalStock,
-      relatedProducts: relatedResult.items.filter((r) => r.id !== product.id).slice(0, 4),
-      title: product.name,
-      metaDescription: product.description ?? `${product.name} - Compra online con envío a todo el país`,
-      metaImage: product.baseImage,
+      skuAvailability: pdp.skuAvailability,
+      totalStock: pdp.totalStock,
+      relatedProducts: relatedResult.items.filter((r) => r.id !== pdp.product.id).slice(0, 4),
+      title: pdp.product.name,
+      metaDescription: pdp.product.description ?? `${pdp.product.name} - Compra online con envío a todo el país`,
+      metaImage: pdp.product.baseImage,
       csrfToken,
     });
     return renderView("layouts/base.eta", {
       body,
-      title: product.name,
-      metaDescription: product.description ?? `${product.name} - Compra online con envío a todo el país`,
-      metaImage: product.baseImage,
-      canonicalUrl: `/products/${product.slug}`,
-      jsonLd: buildProductJsonLd(product, skus, skuAvailability),
+      title: pdp.product.name,
+      metaDescription: pdp.product.description ?? `${pdp.product.name} - Compra online con envío a todo el país`,
+      metaImage: pdp.product.baseImage,
+      canonicalUrl: `/products/${pdp.product.slug}`,
+      jsonLd: buildProductJsonLd(pdp.product, pdp.skus, pdp.skuAvailability),
       cartCount,
       customer,
       csrfToken,
@@ -122,7 +105,7 @@ export const storefrontRoutes = new Elysia()
       minPriceCents: (query as Record<string, string>).minPrice ? parseInt((query as Record<string, string>).minPrice!, 10) : undefined,
       maxPriceCents: (query as Record<string, string>).maxPrice ? parseInt((query as Record<string, string>).maxPrice!, 10) : undefined,
       inStock: (query as Record<string, string>).inStock === "1",
-    });
+    }, catalogSearchReadModel);
     const categories = await getCategoryList();
     const body = renderView("pages/storefront/plp.eta", {
       category: { name: q ? `Resultados para "${safeQ}"` : "Todos los productos", slug: "" },
@@ -143,7 +126,7 @@ export const storefrontRoutes = new Elysia()
   })
   .get("/api/search/suggest", async ({ query }) => {
     const q = ((query as Record<string, string>).q ?? "").trim();
-    const results = await searchAutocompleteUseCase(q, 5);
+    const results = await searchAutocompleteUseCase(q, 5, catalogSearchReadModel);
     if (results.length === 0) return "";
     let html = '<ul class="suggest-list">';
     for (const r of results) {
@@ -160,14 +143,10 @@ export const storefrontRoutes = new Elysia()
     return html;
   })
   .get("/sitemap.xml", async () => {
-    const db = getDb();
-    const products = await db
-      .select({ slug: s.products.slug, updatedAt: s.products.updatedAt })
-      .from(s.products)
-      .where(eq(s.products.editorialStatus, "published"))
-      .orderBy(desc(s.products.updatedAt));
+    const products = await getPublishedProductsForSitemap();
     const categories = await getCategoryList();
-    const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
+    const config = getConfig();
+    const baseUrl = config.BASE_URL;
     const today = new Date().toISOString().split("T")[0];
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
     xml += `\n  <url><loc>${baseUrl}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`;
@@ -182,7 +161,8 @@ export const storefrontRoutes = new Elysia()
     return new Response(xml, { headers: { "Content-Type": "application/xml" } });
   })
   .get("/robots.txt", async () => {
-    const baseUrl = process.env.BASE_URL ?? "http://localhost:3000";
+    const config = getConfig();
+    const baseUrl = config.BASE_URL;
     return `User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /cart\nDisallow: /checkout\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
   })
   .get("/privacidad", async ({ cookie }) => {

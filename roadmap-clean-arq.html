@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roadmap Clean Architecture - Ecommerce</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f3ee;
+      --panel: #fffaf3;
+      --ink: #1f2933;
+      --muted: #5f6b7a;
+      --line: #d9cfc0;
+      --accent: #7c4a24;
+      --accent-2: #123c55;
+      --ok: #126b45;
+      --warn: #9a5b00;
+      --risk: #9b1c1c;
+      --code: #f0e7da;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+
+    header {
+      padding: 48px 24px 32px;
+      background: linear-gradient(135deg, #27180f, #123c55);
+      color: #fffaf3;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 24px auto 56px;
+    }
+
+    h1, h2, h3 { line-height: 1.15; margin: 0 0 14px; }
+    h1 { font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -0.04em; max-width: 920px; }
+    h2 { font-size: clamp(1.45rem, 3vw, 2.15rem); padding-top: 8px; }
+    h3 { font-size: 1.15rem; color: var(--accent-2); }
+    p { margin: 0 0 14px; }
+    a { color: var(--accent-2); }
+
+    .lead {
+      max-width: 900px;
+      color: #eadfce;
+      font-size: 1.08rem;
+      margin-top: 18px;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .pill {
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: .9rem;
+      background: rgba(255,255,255,.08);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    section, .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 12px 30px rgba(58, 41, 24, .06);
+      margin-bottom: 18px;
+    }
+
+    .card { margin-bottom: 0; }
+
+    ul, ol { margin: 10px 0 0 22px; padding: 0; }
+    li { margin: 7px 0; }
+
+    code {
+      background: var(--code);
+      border: 1px solid #e1d4c3;
+      border-radius: 6px;
+      padding: 1px 5px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: .92em;
+    }
+
+    pre {
+      overflow-x: auto;
+      background: #201913;
+      color: #f7ead8;
+      border-radius: 14px;
+      padding: 16px;
+      margin: 12px 0 0;
+    }
+
+    pre code { background: transparent; border: 0; padding: 0; color: inherit; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th { background: #eadfce; }
+
+    .status {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: .82rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status.todo { background: #f5d7d7; color: var(--risk); }
+    .status.doing { background: #ffe6bd; color: var(--warn); }
+    .status.done { background: #d9f0e4; color: var(--ok); }
+
+    .rule {
+      border-left: 5px solid var(--accent);
+      padding-left: 14px;
+      margin-top: 12px;
+    }
+
+    .warning {
+      border-left: 5px solid var(--risk);
+      background: #fff1f1;
+    }
+
+    .toc a {
+      display: block;
+      text-decoration: none;
+      padding: 7px 0;
+      border-bottom: 1px dashed var(--line);
+    }
+
+    .phase-title {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    @media print {
+      header { background: #fff; color: #000; padding: 24px 0; }
+      main { width: 100%; margin: 0; }
+      section, .card { break-inside: avoid; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Roadmap para migrar el ecommerce a Clean Architecture pura</h1>
+    <p class="lead">Documento operativo para que otro agente ejecute el refactor sin improvisar. El objetivo es preservar comportamiento, seguridad y criterios de las specs mientras se corrige la dirección de dependencias, se reducen acoplamientos y se sacan reglas de negocio de HTTP/infraestructura.</p>
+    <div class="meta">
+      <span class="pill">Proyecto: Maison Elite Ecommerce</span>
+      <span class="pill">Stack actual: Bun + Elysia + Drizzle + Eta</span>
+      <span class="pill">No sustituir stack</span>
+      <span class="pill">No reclamar producción sin evidencia</span>
+    </div>
+  </header>
+
+  <main>
+    <section id="objective">
+      <h2>1. Objetivo</h2>
+      <p>Reorganizar el código hacia Clean Architecture estricta, manteniendo el monolito modular y los bounded contexts existentes. La migración debe ser incremental, verificada y sin reescritura completa.</p>
+      <div class="rule">
+        <strong>Resultado esperado:</strong> las reglas de negocio viven en <code>domain</code> y <code>application</code>, los detalles viven en <code>infrastructure</code> y <code>interfaces</code>, y las dependencias siempre apuntan hacia adentro.
+      </div>
+    </section>
+
+    <section id="non-goals">
+      <h2>2. No Objetivos</h2>
+      <ul>
+        <li>No introducir Next.js, React SPA, microservicios, colas externas, Redis ni otra base de datos.</li>
+        <li>No cambiar reglas de negocio mientras se refactoriza arquitectura, salvo bug confirmado por specs/tests.</li>
+        <li>No mover archivos masivamente sin tests de caracterización antes.</li>
+        <li>No eliminar módulos como <code>crm</code> o <code>stylist</code> sin decisión explícita del usuario.</li>
+        <li>No marcar specs como completadas por refactor interno sin evidencia funcional.</li>
+      </ul>
+    </section>
+
+    <section id="toc" class="toc">
+      <h2>3. Índice de Ejecución</h2>
+      <a href="#rules">Reglas arquitectónicas obligatorias</a>
+      <a href="#target-shape">Estructura objetivo</a>
+      <a href="#hotspots">Hotspots actuales</a>
+      <a href="#phases">Fases del roadmap</a>
+      <a href="#module-plan">Plan por módulo</a>
+      <a href="#testing">Testing y verificación</a>
+      <a href="#definition-done">Definition of Done</a>
+    </section>
+
+    <section id="rules">
+      <h2>4. Reglas Arquitectónicas Obligatorias</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Dirección de dependencias</h3>
+          <ul>
+            <li><code>domain</code> no importa nada de <code>application</code>, <code>infrastructure</code>, <code>interfaces</code> ni <code>web</code>.</li>
+            <li><code>application</code> no importa <code>getDb</code>, <code>schema.ts</code>, SDKs externos, Elysia, Eta ni <code>process.env</code>.</li>
+            <li><code>interfaces</code> adapta HTTP, cookies, forms y templates; no consulta DB directamente.</li>
+            <li><code>infrastructure</code> implementa puertos, repositorios, gateways, proveedores y detalles externos.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Casos de uso</h3>
+          <ul>
+            <li>Reciben dependencias por parámetro o factory del composition root.</li>
+            <li>Devuelven DTOs explícitos, no filas Drizzle crudas.</li>
+            <li>Coordinan transacciones mediante un puerto <code>UnitOfWork</code>, no mediante <code>getDb()</code>.</li>
+            <li>No renderizan HTML ni conocen redirects.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Repositorios y gateways</h3>
+          <ul>
+            <li>Las interfaces de repositorio viven en <code>application/ports</code>.</li>
+            <li>Las implementaciones Drizzle viven en <code>infrastructure</code>.</li>
+            <li>Providers de pago, notificaciones, AI y config se consumen por puertos.</li>
+            <li>No usar <code>instanceof</code> de infraestructura dentro de application.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>HTTP y presentación</h3>
+          <ul>
+            <li>Las rutas solo validan input HTTP, llaman casos de uso y renderizan respuesta.</li>
+            <li>Los handlers no calculan stock, totales, reglas de pago ni autorización de dominio.</li>
+            <li>HTML manual permitido solo para fragments simples; preferir templates/partials.</li>
+            <li>Errores se traducen en presenter/mapper, no dentro del caso de uso.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="target-shape">
+      <h2>5. Estructura Objetivo por Módulo</h2>
+      <pre><code>src/modules/&lt;context&gt;/
+  domain/
+    entities.ts
+    value-objects.ts
+    services.ts
+    events.ts
+    errors.ts
+  application/
+    ports/
+      repositories.ts
+      gateways.ts
+      unit-of-work.ts
+    use-cases/
+      *.ts
+    dto.ts
+  infrastructure/
+    drizzle-*.repository.ts
+    *-gateway.ts
+    mappers.ts
+  presentation/
+    http-routes.ts
+    presenters.ts
+    validation.ts</code></pre>
+      <p>El composition root debe estar en <code>src/web/app.ts</code> o en factories cercanas como <code>src/web/composition/*.ts</code>. Ahí se conectan casos de uso con implementaciones concretas.</p>
+    </section>
+
+    <section id="hotspots">
+      <h2>6. Hotspots Actuales a Corregir</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Prioridad</th>
+            <th>Área</th>
+            <th>Evidencia</th>
+            <th>Corrección objetivo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status todo">P0</span></td>
+            <td>Checkout god use case</td>
+            <td><code>src/modules/checkout/application/use-cases.ts</code>, especialmente <code>confirmCheckoutUseCase</code></td>
+            <td>Separar puertos, workflow transaccional, creación de orden, reserva de stock e inicio de pago.</td>
+          </tr>
+          <tr>
+            <td><span class="status todo">P0</span></td>
+            <td>Pagos acoplados a providers</td>
+            <td><code>payments/application/provider.ts</code>, <code>payments/application/use-cases.ts</code>, <code>payments/presentation/return-routes.ts</code></td>
+            <td>Usar <code>PaymentGateway</code> y callbacks polimórficos, sin <code>instanceof</code> en application/presentation.</td>
+          </tr>
+          <tr>
+            <td><span class="status todo">P1</span></td>
+            <td>DB directa en rutas</td>
+            <td><code>web/routes/storefront.ts</code>, <code>customers/presentation/storefront-account-routes.ts</code>, <code>fulfillment/presentation/storefront-routes.ts</code></td>
+            <td>Mover consultas a use cases; rutas quedan como adaptadores.</td>
+          </tr>
+          <tr>
+            <td><span class="status todo">P1</span></td>
+            <td>Schema global</td>
+            <td><code>src/shared/infrastructure/db/schema.ts</code></td>
+            <td>Primero ocultar schema detrás de repositorios; dividir archivo solo después de estabilizar puertos.</td>
+          </tr>
+          <tr>
+            <td><span class="status todo">P1</span></td>
+            <td>Config y logging dispersos</td>
+            <td>Usos directos de <code>process.env</code> y <code>console.*</code></td>
+            <td>Introducir puertos/config central y logger inyectable o singleton controlado.</td>
+          </tr>
+          <tr>
+            <td><span class="status todo">P2</span></td>
+            <td>Módulos fuera de core MVP</td>
+            <td><code>crm</code>, <code>stylist</code>, config AI, tablas <code>stylist_*</code></td>
+            <td>Aislar por feature flag/spec propio; evitar que contaminen ecommerce core.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="phases">
+      <h2>7. Fases del Roadmap</h2>
+
+      <article class="card">
+        <div class="phase-title"><h3>Fase 0 - Línea Base y Guardrails</h3><span class="status doing">Primero</span></div>
+        <p>Antes de mover arquitectura, congelar comportamiento observable.</p>
+        <ol>
+          <li>Ejecutar <code>bun run typecheck</code> y <code>bun test</code>.</li>
+          <li>Ejecutar integración real con <code>RUN_DB_INTEGRATION=1 bun test tests/integration/checkout.test.ts</code> si hay DB disponible.</li>
+          <li>Agregar tests de caracterización para checkout confirm, retry de pago, returns de WebPay/MercadoPago y wishlist si faltan.</li>
+          <li>Crear una regla de revisión: ningún nuevo import de <code>shared/infrastructure/db</code> desde <code>application</code> o <code>interfaces</code>.</li>
+        </ol>
+        <p><strong>Criterio de salida:</strong> baseline verde o fallos documentados antes del refactor.</p>
+      </article>
+
+      <article class="card">
+        <div class="phase-title"><h3>Fase 1 - Puertos Compartidos Mínimos</h3><span class="status todo">P0</span></div>
+        <ol>
+          <li>Crear <code>src/shared/application/ports/unit-of-work.ts</code> con una abstracción transaccional mínima.</li>
+          <li>Crear <code>src/shared/application/ports/logger.ts</code> si el logger debe usarse fuera de web.</li>
+          <li>Crear <code>src/shared/application/ports/clock.ts</code> y <code>id-generator.ts</code> solo si ayuda a testear flujos críticos; no sobrediseñar.</li>
+          <li>Implementar adaptadores Drizzle en <code>src/shared/infrastructure</code>.</li>
+        </ol>
+        <p><strong>Criterio de salida:</strong> los nuevos puertos existen, tienen tests unitarios mínimos y no cambian comportamiento.</p>
+      </article>
+
+      <article class="card">
+        <div class="phase-title"><h3>Fase 2 - Refactor de Checkout</h3><span class="status todo">P0</span></div>
+        <ol>
+          <li>Crear <code>checkout/application/ports/repositories.ts</code> para carrito, checkout session y snapshots.</li>
+          <li>Crear puertos consumidos por checkout: <code>InventoryReservationPort</code>, <code>PricingPort</code>, <code>CustomerVerificationPort</code>, <code>OrderWriterPort</code>, <code>PaymentInitiationPort</code>, <code>OutboxPort</code>.</li>
+          <li>Mover reglas puras a dominio: estado de checkout, expiración, validación de transición, cálculo de snapshot requerido.</li>
+          <li>Extraer <code>ConfirmCheckoutUseCase</code> como clase o factory con dependencias explícitas.</li>
+          <li>Dejar <code>checkout/presentation/storefront-routes.ts</code> solo con parseo HTTP, llamada a use case y rendering.</li>
+        </ol>
+        <p><strong>Criterio de salida:</strong> <code>checkout/application</code> ya no importa <code>getDb</code>, <code>schema.ts</code>, repositorios concretos ni providers de pago.</p>
+      </article>
+
+      <article class="card">
+        <div class="phase-title"><h3>Fase 3 - Refactor de Pagos</h3><span class="status todo">P0</span></div>
+        <ol>
+          <li>Renombrar la abstracción a <code>PaymentGateway</code> o mantener <code>PaymentProvider</code>, pero mover factory concreta fuera de application.</li>
+          <li>Crear <code>payments/application/ports/payment-gateway.ts</code>, <code>payment-repository.ts</code> y <code>payment-finalizer.ts</code>.</li>
+          <li>Eliminar <code>instanceof MercadoPagoProvider</code> y <code>instanceof WebPayProvider</code> de application.</li>
+          <li>Modelar operaciones específicas como métodos del gateway: <code>fetchExternalStatus</code>, <code>commitReturn</code>, <code>parseWebhook</code>.</li>
+          <li>Mover lógica de return desde <code>presentation/return-routes.ts</code> a casos de uso como <code>HandlePaymentReturnUseCase</code>.</li>
+        </ol>
+        <p><strong>Criterio de salida:</strong> agregar o modificar provider no requiere tocar casos de uso centrales salvo contrato.</p>
+      </article>
+
+      <article class="card">
+        <div class="phase-title"><h3>Fase 4 - Rutas sin DB Directa</h3><span class="status todo">P1</span></div>
+        <ol>
+          <li>En <code>storefront.ts</code>, mover PDP, sitemap y robots a casos de uso/presenters.</li>
+          <li>En cuenta cliente, mover favoritos a <code>customers/application/use-cases</code>.</li>
+          <li>En fulfillment storefront, mover autorización por token público a un caso de uso.</li>
+          <li>Eliminar imports de <code>getDb</code> y <code>schema.ts</code> desde <code>interfaces</code>.</li>
+        </ol>
+        <p><strong>Criterio de salida:</strong> grep de <code>src/modules/**/presentation/*.ts</code> no encuentra imports de DB/schema.</p>
+      </article>
+
+      <article class="card">
+        <div class="phase-title"><h3>Fase 5 - Catálogo y Búsqueda</h3><span class="status done">Hecho</span></div>
+        <ol>
+          <li>Separar query model de búsqueda en <code>catalog/application/ports/search-read-model.ts</code>.</li>
+          <li>Mover SQL Drizzle a <code>catalog/infrastructure/drizzle-search-read-model.ts</code>.</li>
+          <li>Mantener DTOs de PLP/PDP independientes de filas Drizzle.</li>
+          <li>Verificar filtros, sort y paginación contra subspec de catálogo.</li>
+        </ol>
+        <p><strong>Criterio de salida:</strong> <code>catalog/application/search-use-cases.ts</code> no importa Drizzle ni schema.</p>
+        <p><strong>Evidencia 2026-06-12:</strong> <code>bun run typecheck</code> PASS; <code>bun test</code> PASS (346 pass, 35 skip, 0 fail). Grep de <code>catalog/application/search-use-cases.ts</code> sin imports de Drizzle/schema.</p>
+      </article>
+
+      <article class="card">
+        <div class="phase-title"><h3>Fase 6 - Config, Logger y Notificaciones</h3><span class="status doing">Parcial</span></div>
+        <ol>
+          <li>Reemplazar accesos directos a <code>process.env</code> fuera de <code>config.ts</code>.</li>
+          <li>Reemplazar <code>console.*</code> fuera del logger central.</li>
+          <li>Convertir <code>NotificationSender</code> en gateway inyectado desde composition root.</li>
+          <li>Aislar AI stylist detrás de puerto y feature flag validado por config.</li>
+        </ol>
+        <p><strong>Criterio de salida:</strong> grep de <code>process.env</code> solo queda en config, tests o adaptadores explícitamente autorizados.</p>
+        <p><strong>Evidencia 2026-06-12:</strong> <code>process.env</code> solo queda en <code>shared/infrastructure/config.ts</code>; <code>console.*</code> solo queda en <code>shared/infrastructure/logger/index.ts</code>; <code>NotificationSender</code> se inyecta desde <code>worker.ts</code>. <code>bun run typecheck</code> PASS; <code>bun test</code> PASS (346 pass, 35 skip, 0 fail). Pendiente: aislar AI stylist detrás de puerto/feature flag validado por config.</p>
+      </article>
+
+      <article class="card">
+        <div class="phase-title"><h3>Fase 7 - Schema y Repositorios por Contexto</h3><span class="status todo">P2</span></div>
+        <ol>
+          <li>No dividir <code>schema.ts</code> al principio; primero ocultarlo detrás de puertos.</li>
+          <li>Cuando application/presentation ya no dependan de schema, evaluar partición por archivos: <code>catalog.schema.ts</code>, <code>orders.schema.ts</code>, <code>payments.schema.ts</code>.</li>
+          <li>Mantener un barrel de schema para Drizzle si facilita migraciones.</li>
+          <li>Evitar ciclos entre schemas con referencias cruzadas no controladas.</li>
+        </ol>
+        <p><strong>Criterio de salida:</strong> partición opcional completa sin cambios de migración inesperados.</p>
+      </article>
+    </section>
+
+    <section id="module-plan">
+      <h2>8. Plan por Módulo</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Módulo</th>
+            <th>Estado objetivo</th>
+            <th>Primer cambio seguro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>checkout</code></td>
+            <td>Workflow transaccional con puertos explícitos.</td>
+            <td>Extraer interfaces de repositorio sin mover lógica todavía.</td>
+          </tr>
+          <tr>
+            <td><code>payments</code></td>
+            <td>Gateway polimórfico sin providers concretos en application.</td>
+            <td>Mover factory <code>createProvider</code> al composition root.</td>
+          </tr>
+          <tr>
+            <td><code>catalog</code></td>
+            <td>Read models de búsqueda en infrastructure.</td>
+            <td>Definir DTOs de búsqueda y puerto <code>CatalogSearchReadModel</code>.</td>
+          </tr>
+          <tr>
+            <td><code>customers</code></td>
+            <td>Cuenta/favoritos/data protection sin DB en rutas.</td>
+            <td>Crear <code>getCustomerFavoritesUseCase</code> y <code>removeFavoriteUseCase</code>.</td>
+          </tr>
+          <tr>
+            <td><code>fulfillment</code></td>
+            <td>Autorización de returns dentro de application.</td>
+            <td>Crear <code>requestReturnByPublicTokenUseCase</code>.</td>
+          </tr>
+          <tr>
+            <td><code>crm</code></td>
+            <td>Aislado del core ecommerce y documentado.</td>
+            <td>No tocar hasta decidir alcance; impedir imports cruzados innecesarios.</td>
+          </tr>
+          <tr>
+            <td><code>stylist</code></td>
+            <td>Feature aislada, con gateway AI y límites de datos.</td>
+            <td>Mover API keys a config validada y ocultar providers detrás de puerto.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="testing">
+      <h2>9. Testing y Verificación</h2>
+      <p>Cada fase debe mantener la suite verde y agregar tests de caracterización antes de tocar flujos críticos.</p>
+      <pre><code>bun run typecheck
+bun test
+RUN_DB_INTEGRATION=1 bun test tests/integration/checkout.test.ts
+bun run test:e2e</code></pre>
+      <div class="rule warning">
+        <strong>Advertencia:</strong> si no hay DB o navegador disponible, documentar el comando no ejecutado, la razón y el riesgo. No marcar producción ni spec PASS con evidencia parcial.
+      </div>
+      <h3>Cobertura mínima por fase</h3>
+      <ul>
+        <li>Checkout: doble confirmación, carrito vacío, stock insuficiente, precio cambiado, email no verificado, pago caído y retry.</li>
+        <li>Pagos: return manipulado, monto distinto, moneda distinta, webhook duplicado, provider caído y firma inválida.</li>
+        <li>Rutas: app.handle para PDP, PLP/search, cart, checkout, account favorites y returns.</li>
+        <li>Arquitectura: grep o test estático que falle ante nuevos imports de DB en application/presentation.</li>
+      </ul>
+    </section>
+
+    <section id="dependency-checks">
+      <h2>10. Checks Estáticos Sugeridos</h2>
+      <p>Hasta que exista una herramienta formal de boundaries, usar estos comandos como smoke checks manuales:</p>
+      <pre><code>rg "shared/infrastructure/db" src/modules/*/application src/modules/*/presentation
+rg "from .*infrastructure" src/modules/*/application
+rg "instanceof .*Provider" src/modules/payments
+rg "process\.env" src
+rg "console\." src</code></pre>
+      <p>Un resultado no vacío no siempre es fallo automático, pero debe estar justificado y reducido por fase.</p>
+    </section>
+
+    <section id="composition-root">
+      <h2>11. Composition Root</h2>
+      <p>La creación de objetos concretos debe concentrarse en web/composition para que el resto del sistema dependa de contratos.</p>
+      <pre><code>src/web/composition/
+  checkout.ts
+  payments.ts
+  catalog.ts
+  customers.ts
+  shared.ts</code></pre>
+      <p>Ejemplo de intención:</p>
+      <pre><code>// Pseudocódigo
+export function makeConfirmCheckoutUseCase() {
+  const db = getDb();
+  const uow = new DrizzleUnitOfWork(db);
+  return new ConfirmCheckoutUseCase({
+    unitOfWork: uow,
+    checkoutRepo: new DrizzleCheckoutRepository(db),
+    inventory: new DrizzleInventoryReservationGateway(db),
+    pricing: makePricingService(),
+    payments: makePaymentInitiationUseCase(),
+    outbox: new DrizzleOutboxGateway(db),
+  });
+}</code></pre>
+    </section>
+
+    <section id="migration-rules">
+      <h2>12. Reglas de Migración Incremental</h2>
+      <ol>
+        <li>Crear puerto.</li>
+        <li>Crear implementación adaptadora usando el código existente.</li>
+        <li>Inyectar adaptador desde composition root.</li>
+        <li>Mover una sola ruta o caso de uso.</li>
+        <li>Ejecutar verificación.</li>
+        <li>Eliminar import viejo.</li>
+        <li>Repetir.</li>
+      </ol>
+      <div class="rule">
+        <strong>Regla de tamaño:</strong> no mezclar refactor de arquitectura con cambios de comportamiento en el mismo commit/tarea, salvo que el test demuestre un bug existente y el usuario lo apruebe.
+      </div>
+    </section>
+
+    <section id="definition-done">
+      <h2>13. Definition of Done</h2>
+      <ul>
+        <li><code>bun run typecheck</code> pasa.</li>
+        <li><code>bun test</code> pasa.</li>
+        <li>Tests de integración relevantes pasan o quedan documentados como no ejecutados con razón.</li>
+        <li>No hay nuevos imports de infraestructura desde <code>domain</code> o <code>application</code>.</li>
+        <li>No hay DB directa desde rutas refactorizadas.</li>
+        <li>Los flujos afectados mantienen evidencia en tests o checklist manual.</li>
+        <li>No se actualizan specs a PASS sin evidencia.</li>
+      </ul>
+    </section>
+
+    <section id="agent-instructions">
+      <h2>14. Instrucciones para el Agente Ejecutor</h2>
+      <ol>
+        <li>Leer <code>AGENTS.md</code>, <code>specs/spec-auditoria-final.md</code> y los subspecs del área antes de editar.</li>
+        <li>Empezar por Fase 0 y no saltar a particionar carpetas sin puertos y tests.</li>
+        <li>Priorizar checkout y pagos antes que estética de carpetas.</li>
+        <li>Hacer cambios pequeños y verificables.</li>
+        <li>Reportar archivos tocados, specs afectadas, comandos ejecutados y riesgos restantes.</li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>

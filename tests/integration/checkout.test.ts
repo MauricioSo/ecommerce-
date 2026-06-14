@@ -9,8 +9,8 @@ process.env.PAYMENT_PROVIDER = "mock";
 import { resetConfig } from "../../src/shared/infrastructure/config.ts";
 import { getDb } from "../../src/shared/infrastructure/db/index.ts";
 import * as s from "../../src/shared/infrastructure/db/schema.ts";
-import { setPaymentProvider, type PaymentProvider, type PaymentProviderResult, type WebhookEvent } from "../../src/modules/payments/application/provider.ts";
-import { addToCartUseCase, startCheckoutUseCase, setCheckoutShippingUseCase, confirmCheckoutUseCase } from "../../src/modules/checkout/application/use-cases.ts";
+import { setPaymentProvider, type PaymentProvider, type PaymentProviderResult, type WebhookEvent } from "../../src/application/payments/provider.ts";
+import { addToCartUseCase, startCheckoutUseCase, setCheckoutShippingUseCase, confirmCheckoutUseCase } from "../../src/application/checkout/use-cases.ts";
 import { signCookieValue } from "../../src/web/helpers/signed-cookie.ts";
 
 const runDbIntegration = process.env.RUN_DB_INTEGRATION === "1";

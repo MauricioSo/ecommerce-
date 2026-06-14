@@ -9,7 +9,24 @@ E-commerce platform built with Bun, Elysia, Eta templates, and PostgreSQL.
 - **Templates**: Eta
 - **ORM**: Drizzle
 - **Database**: PostgreSQL
-- **Architecture**: Monolito modular con Clean Architecture
+- **Architecture**: Clean Architecture por capas (domain / application / infrastructure / presentation + shared + web)
+
+## Arquitectura
+
+Clean Architecture por capas bajo `src/`:
+
+- `domain/` — entidades, value objects y factories (sin dependencias de framework).
+- `application/` — use-cases (orquestacion) y `ports/` (interfaces de dependencias).
+- `infrastructure/` — adaptadores concretos: repositorios Drizzle, providers de pago (WebPay/MercadoPago), gateways de IA.
+- `presentation/` — plugins de rutas Elysia (`*-routes.ts`).
+- `shared/` — kernel transversal: value objects, config, DB, logger, metricas, outbox, JWT.
+- `web/` — ensamblado de la app Elysia, middleware, templates Eta y assets estaticos.
+
+Excepciones intencionales al patron de 4 capas:
+
+- **`audit`**: preocupacion transversal. Tipos en `domain/audit/`, escritura centralizada en `shared/infrastructure/audit.ts` (`writeAuditEvent`). Sin capa de presentation.
+- **`admin`**: gestiona autenticacion/sesiones (sin aggregate propio); roles y permisos se modelan en el esquema de DB. Sin capa de domain.
+- **`notifications`**: se procesa via outbox asincrono en el worker. Sin capa de presentation (no es HTTP).
 
 ## Requirements
 

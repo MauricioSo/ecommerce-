@@ -1,4 +1,5 @@
 import Elysia from "elysia";
+import { getConfig } from "../../shared/infrastructure/config.ts";
 
 type RateLimitEntry = { count: number; resetAt: number };
 
@@ -6,7 +7,8 @@ const store = new Map<string, RateLimitEntry>();
 
 const WINDOW_MS = 60_000;
 
-const RATE_LIMIT_SCALE = Number(process.env.RATE_LIMIT_SCALE ?? "1") || 1;
+const config = getConfig();
+const RATE_LIMIT_SCALE = config.RATE_LIMIT_SCALE;
 
 const RATE_LIMITS: Record<string, { paths: Set<string>; max: number }> = {
   adminAuth: { paths: new Set(["/admin/login"]), max: 5 * RATE_LIMIT_SCALE },

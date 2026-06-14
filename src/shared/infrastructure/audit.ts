@@ -1,5 +1,6 @@
 import { getDb } from "../infrastructure/db/index.ts";
 import * as s from "../infrastructure/db/schema.ts";
+import { createAuditEvent } from "../../domain/audit/index.ts";
 
 export async function writeAuditEvent(input: {
   aggregateType: string;
@@ -9,13 +10,14 @@ export async function writeAuditEvent(input: {
   actorId?: string;
   correlationId?: string;
 }): Promise<void> {
+  const event = createAuditEvent(input);
   await getDb().insert(s.auditEvents).values({
-    id: crypto.randomUUID(),
-    aggregateType: input.aggregateType,
-    aggregateId: input.aggregateId,
-    eventType: input.eventType,
-    payload: input.payload ?? null,
-    actorId: input.actorId ?? null,
-    correlationId: input.correlationId ?? null,
+    id: event.id,
+    aggregateType: event.aggregateType,
+    aggregateId: event.aggregateId,
+    eventType: event.eventType,
+    payload: event.payload,
+    actorId: event.actorId,
+    correlationId: event.correlationId,
   });
 }

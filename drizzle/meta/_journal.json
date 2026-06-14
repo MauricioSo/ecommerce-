@@ -64,6 +64,13 @@
       "when": 1777860640625,
       "tag": "0008_fine_doctor_octopus",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1778300528020,
+      "tag": "0009_chubby_praxagora",
+      "breakpoints": true
     }
   ]
 }

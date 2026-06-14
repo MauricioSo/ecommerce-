@@ -11,7 +11,7 @@ import {
   VALID_TASK_TYPES,
   VALID_INTERACTION_CHANNELS,
   VALID_INTERACTION_DIRECTIONS,
-} from "../src/modules/crm/domain/types.ts";
+} from "../src/domain/crm/types.ts";
 
 describe("CRM Types - Validators", () => {
   describe("isValidTaskStatus", () => {

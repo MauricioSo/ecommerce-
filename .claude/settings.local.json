@@ -11,7 +11,21 @@
       "Bash(DATABASE_URL=\"postgres://postgres:postgres@172.26.0.2:5432/ecommerce\" bun run *)",
       "Bash(node -e ' *)",
       "PowerShell(docker cp *)",
-      "PowerShell(docker exec ecommerce-db *)"
+      "PowerShell(docker exec ecommerce-db *)",
+      "PowerShell(bun run *)",
+      "PowerShell(cd C:\\\\Users\\\\usuario\\\\Documents\\\\ecommerce; $env:DATABASE_URL = \\(Get-Content .env | Select-String \"DATABASE_URL\" | ForEach-Object { $_ -replace \"DATABASE_URL=\",\"\" }\\); Write-Host \"DB: $env:DATABASE_URL\"; bun -e \"const {Pool} = await import\\('pg'\\); const p = new Pool\\({connectionString: '$env:DATABASE_URL'}\\); const c = await p.connect\\(\\); console.log\\('OK'\\); c.release\\(\\); await p.end\\(\\);\" 2>&1)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\usuario\\\\Herd\\\\wordpress\" -Force | Select-Object Name, @{Name=\"Type\";Expression={if\\($_.PSIsContainer\\){\"DIR\"}else{\"FILE\"}}})",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\usuario\\\\Herd\\\\wordpress\" | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\usuario\\\\Herd\\\\wordpress\\\\wp-content\\\\plugins\" -Directory | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\usuario\\\\Herd\\\\wordpress\\\\wp-content\\\\themes\" -Directory | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\usuario\\\\Herd\\\\wordpress\\\\wp-content\\\\plugins\\\\lmc-radio\" -Recurse | Where-Object { $_.Extension -eq \".php\" } | Select-Object -ExpandProperty Name -First 20)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\usuario\\\\Herd\\\\wordpress\\\\wp-content\\\\plugins\\\\dental-ai-sim\" -Recurse | Where-Object { $_.Extension -eq \".php\" } | Select-Object -ExpandProperty Name -First 20)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\usuario\\\\Herd\\\\wordpress\\\\wp-content\\\\plugins\" | Where-Object { $_.PSIsContainer } | Select-Object Name | Measure-Object | Select-Object Count)",
+      "PowerShell(bun *)",
+      "PowerShell(cd C:\\\\Users\\\\usuario\\\\Documents\\\\ecommerce; $env:DATABASE_URL=\"postgres://postgres:postgres@localhost:5434/ecommerce\"; bunx drizzle-kit migrate 2>&1)",
+      "PowerShell(Get-Content *)"
     ]
   }
 }

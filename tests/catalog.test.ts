@@ -4,7 +4,7 @@ process.env.NODE_ENV = "development";
 process.env.JWT_SECRET = "test-secret-at-least-32-characters-long";
 process.env.DATABASE_URL = "postgres://localhost/test";
 
-import { sortAggRows } from "../src/modules/catalog/application/search-use-cases.ts";
+import { sortAggRows } from "../src/application/catalog/search-use-cases.ts";
 
 type AggRow = {
   productId: string;

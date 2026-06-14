@@ -1,5 +1,14 @@
 # Auditoria de cambios recientes
 
+> **Nota de estado (actualizado 2026-06-13):** Las rutas de archivos de este documento
+> fueron corregidas para reflejar la estructura real del repositorio: capas
+> `src/presentation`, `src/application`, `src/infrastructure`, `src/domain` (no
+> `src/modules/<feature>/interfaces/`). Para el estado vigente de release, consultar
+> `RELEASE-CHECKLIST.md` (más reciente). Los hallazgos de seguridad de las primeras
+> rondas (CSRF en formularios, CSP, XSS/escaping, JS inline, retornos de pago por
+> token, firma HMAC de MercadoPago) fueron cerrados en su mayoría; los pendientes
+> vigentes se listan en "Issues abiertos conocidos" al final de este archivo.
+
 Fecha: 2026-04-24
 
 ## Verificacion ejecutada
@@ -36,7 +45,7 @@ Archivo: `src/web/middleware/security-headers.ts:13-21`
 La policy usa `script-src 'self' https://unpkg.com` sin `'unsafe-inline'` ni nonce. Sin embargo, los templates introducen inline handlers y scripts:
 
 - `src/web/templates/pages/storefront/pdp.eta:21`, `99`, `101` usa `onclick` inline.
-- `src/modules/checkout/interfaces/storefront-routes.ts:226` genera un HTML con `<script>document.getElementById('wp').submit()</script>`.
+- `src/presentation/checkout/storefront-routes.ts:226` genera un HTML con `<script>document.getElementById('wp').submit()</script>`.
 - `src/web/templates/layouts/base.eta:30` usa `hx-vals="js:{...}"`, que depende de evaluacion JS en HTMX.
 
 Tambien `form-action 'self'` bloquea el POST automatico hacia WebPay (`meta.url`) porque es un dominio externo de Transbank.
@@ -58,8 +67,8 @@ Accion recomendada:
 
 Archivos:
 
-- `src/modules/payments/infrastructure/webpay-provider.ts:60`
-- `src/modules/payments/interfaces/return-routes.ts:46-80`
+- `src/infrastructure/payments/webpay-provider.ts:60`
+- `src/presentation/payments/return-routes.ts:46-80`
 
 La ruta de retorno WebPay esta implementada como `GET /checkout/return/webpay`, leyendo `token_ws` desde query. En WebPay Plus, el retorno normalmente llega como `POST` con `token_ws` en el body del formulario.
 
@@ -75,7 +84,7 @@ Accion recomendada:
 
 ### 4. Retornos de pago actualizan orden sin validar el intento de pago
 
-Archivo: `src/modules/payments/interfaces/return-routes.ts:14-24`, `54-63`
+Archivo: `src/presentation/payments/return-routes.ts:14-24`, `54-63`
 
 Las rutas de retorno actualizan `orders.status = confirmed` usando `order_id` recibido por query si el provider devuelve aprobado. No validan que:
 
@@ -96,7 +105,7 @@ Accion recomendada:
 
 ### 5. Fallo de proveedor crea intentos con `providerEventId` duplicado
 
-Archivo: `src/modules/payments/application/use-cases.ts:40-47`
+Archivo: `src/application/payments/use-cases.ts:40-47`
 
 Si MercadoPago/WebPay falla al crear intent (`result.status === "failed"` y `providerIntentId === ""`), se inserta una transaccion con `providerEventId: "_event"`. La tabla tiene `providerEventId` unico, por lo que el segundo fallo puede romper por constraint unique.
 
@@ -113,7 +122,7 @@ Accion recomendada:
 
 ### 6. Checkout completa la sesion antes de asegurar pago iniciable
 
-Archivo: `src/modules/checkout/application/use-cases.ts:219-319`
+Archivo: `src/application/checkout/use-cases.ts:219-319`
 
 `confirmCheckoutUseCase` crea orden, reserva stock y marca checkout como `completed` antes de iniciar el pago. Si `initiatePaymentUseCase` falla, devuelve `paymentStatus: "failed"`, pero la orden queda `pending`, el checkout queda completado y el stock ya fue reservado.
 
@@ -131,7 +140,7 @@ Accion recomendada:
 
 ### 7. Busqueda/filtros de PLP son incorrectos con paginacion
 
-Archivo: `src/modules/catalog/application/search-use-cases.ts:67-127`
+Archivo: `src/application/catalog/search-use-cases.ts:67-127`
 
 La busqueda pagina primero en DB y despues aplica filtros de precio/stock y sort por precio en memoria. El `total` tambien se calcula antes de filtros de precio/stock.
 
@@ -148,7 +157,7 @@ Accion recomendada:
 
 ### 8. Condicion SQL de busqueda puede romper aislamiento por categoria/publicacion
 
-Archivo: `src/modules/catalog/application/search-use-cases.ts:52-55`
+Archivo: `src/application/catalog/search-use-cases.ts:52-55`
 
 La condicion raw SQL agrega `A OR B` sin parentesis explicitos dentro de un `and(...)` de Drizzle:
 
@@ -167,7 +176,7 @@ Accion recomendada:
 
 ### 9. Webhook MercadoPago no valida firma real
 
-Archivo: `src/modules/payments/infrastructure/mercadopago-provider.ts:110-112`
+Archivo: `src/infrastructure/payments/mercadopago-provider.ts:110-112`
 
 La validacion compara `signature === webhookSecret`, pero MercadoPago no envia una firma igual al secreto plano. La firma real usa headers como `x-signature`, `x-request-id` y el payload/id con HMAC.
 
@@ -183,7 +192,7 @@ Accion recomendada:
 
 ### 10. Deduplicacion de webhook MercadoPago ignora updates futuros
 
-Archivo: `src/modules/payments/infrastructure/mercadopago-provider.ts:121-128`
+Archivo: `src/infrastructure/payments/mercadopago-provider.ts:121-128`
 
 `providerEventId` se genera como `mp_${paymentId}_${action}`. Si llega otro `payment.updated` para el mismo pago con cambio de estado, se considera duplicado y se ignora.
 
@@ -198,7 +207,7 @@ Accion recomendada:
 
 ### 11. Rutas webhook leen body reserializado, no raw body
 
-Archivo: `src/modules/payments/interfaces/routes.ts:7-10`
+Archivo: `src/presentation/payments/routes.ts:7-10`
 
 El handler usa `JSON.stringify(body)` si Elysia ya parseo el body. Para verificar firmas de providers normalmente se necesita el raw body exacto.
 
@@ -298,7 +307,7 @@ Accion recomendada:
 
 ### 17. Search tiene N+1 queries severo
 
-Archivo: `src/modules/catalog/application/search-use-cases.ts:76-83`
+Archivo: `src/application/catalog/search-use-cases.ts:76-83`
 
 Por cada producto se consultan SKUs, categoria e inventario por SKU. En una PLP de 12 productos con variantes puede generar decenas de queries.
 
@@ -449,7 +458,7 @@ Accion requerida:
 Archivos:
 
 - `src/web/routes/storefront.ts:10-12`
-- `src/modules/checkout/interfaces/storefront-routes.ts:8-10`
+- `src/presentation/checkout/storefront-routes.ts:8-10`
 
 Se agrego `getCsrfToken(cookie)` leyendo `cookie._csrf?.value`. En un primer GET sin cookie previa, el plugin CSRF genera/setea cookie en `.derive()`, pero las rutas hijo no usan el `csrfToken` derivado por problemas de tipos. Dependiendo de como Elysia sincronice `cookie._csrf.value` despues de `set`, el HTML puede renderizar un token vacio.
 
@@ -471,7 +480,7 @@ Archivos:
 - `src/web/middleware/security-headers.ts:17-25`
 - `src/web/templates/layouts/base.eta:32`
 - `src/web/templates/pages/storefront/pdp.eta:22`, `101`, `103`
-- `src/modules/checkout/interfaces/storefront-routes.ts:26`, `231`, `288`
+- `src/presentation/checkout/storefront-routes.ts:26`, `231`, `288`
 - `src/web/templates/pages/storefront/account/addresses.eta:25`
 - `src/web/templates/pages/admin/order-detail.eta:66`
 
@@ -493,7 +502,7 @@ Accion requerida:
 
 ### R5. La validacion de firma MercadoPago es falsa seguridad
 
-Archivo: `src/modules/payments/infrastructure/mercadopago-provider.ts:163-173`
+Archivo: `src/infrastructure/payments/mercadopago-provider.ts:163-173`
 
 `verifySignature()` solo parsea que existan `ts` y `v1`, pero no calcula ni compara HMAC contra `MP_WEBHOOK_SECRET`. Cualquier request con header `x-signature: ts=1,v1=fake` pasa la validacion.
 
@@ -510,7 +519,7 @@ Accion requerida:
 
 ### R6. Retornos de pago siguen dejando inconsistencias de estado
 
-Archivo: `src/modules/payments/interfaces/return-routes.ts:8-16`, `30-31`, `85-86`
+Archivo: `src/presentation/payments/return-routes.ts:8-16`, `30-31`, `85-86`
 
 El retorno confirma la orden, pero no actualiza `payment_attempts.status`, no registra `payment_transactions`, no audita el cambio y no emite outbox. Ademas `confirmPaymentAttempt()` solo valida ultimo intento por monto/moneda/estado; no valida provider, token, `providerIntentId`, `payment_id`, `external_reference` o `buy_order`.
 
@@ -529,7 +538,7 @@ Accion requerida:
 
 ### R7. WebPay POST return aun depende de `order_id`
 
-Archivo: `src/modules/payments/interfaces/return-routes.ts:71-104`
+Archivo: `src/presentation/payments/return-routes.ts:71-104`
 
 Se agrego `POST /checkout/return/webpay`, pero el handler sigue esperando `order_id`. WebPay Plus normalmente retorna `token_ws`; no garantiza `order_id` en el body.
 
@@ -545,7 +554,7 @@ Accion requerida:
 
 ### R8. Auto-submit WebPay sigue usando script inline bloqueado
 
-Archivo: `src/modules/checkout/interfaces/storefront-routes.ts:231`, `288`
+Archivo: `src/presentation/checkout/storefront-routes.ts:231`, `288`
 
 Aunque se agrego `/static/js/main.js`, el HTML generado conserva:
 
@@ -565,7 +574,7 @@ Accion requerida:
 
 ### R9. PLP sigue filtrando y ordenando parcialmente en memoria
 
-Archivo: `src/modules/catalog/application/search-use-cases.ts:72-132`
+Archivo: `src/application/catalog/search-use-cases.ts:72-132`
 
 Se corrigio la condicion `OR`, pero el problema principal sigue: se pagina en DB, luego se filtra precio/stock y se ordena precio en memoria. `total` y `totalPages` no reflejan filtros finales.
 
@@ -768,7 +777,7 @@ Contexto: se reviso la ejecucion declarada como completada por el agente anterio
 
 ### P1. PLP/search queda roto en runtime
 
-Archivo: `src/modules/catalog/application/search-use-cases.ts:108-160`
+Archivo: `src/application/catalog/search-use-cases.ts:108-160`
 
 La reescritura de busqueda usa SQL raw con placeholders manuales:
 
@@ -790,9 +799,9 @@ WHERE ${baseWhere}
 
 Tambien hay usos dudosos de `IN ${array}`:
 
-- `src/modules/catalog/application/search-use-cases.ts:181-183`
-- `src/modules/catalog/application/search-use-cases.ts:219-227`
-- `src/modules/catalog/application/search-use-cases.ts:231-233`
+- `src/application/catalog/search-use-cases.ts:181-183`
+- `src/application/catalog/search-use-cases.ts:219-227`
+- `src/application/catalog/search-use-cases.ts:231-233`
 
 Impacto:
 
@@ -810,7 +819,7 @@ Accion requerida:
 
 ### P2. MercadoPago signature sigue siendo falsa seguridad
 
-Archivo: `src/modules/payments/infrastructure/mercadopago-provider.ts:163-185`
+Archivo: `src/infrastructure/payments/mercadopago-provider.ts:163-185`
 
 El nuevo `verifySignature()` no implementa el contrato oficial de MercadoPago. Calcula:
 
@@ -845,7 +854,7 @@ Accion requerida:
 
 ### P3. Retornos de pago rechazado/pendiente renderizan pantalla de exito
 
-Archivo: `src/modules/payments/interfaces/return-routes.ts:103-118`
+Archivo: `src/presentation/payments/return-routes.ts:103-118`
 
 La ruta renderiza `checkout-success.eta` pasando `status`:
 
@@ -877,7 +886,7 @@ Accion requerida:
 
 ### P4. WebPay return no es idempotente
 
-Archivo: `src/modules/payments/interfaces/return-routes.ts:132-183`
+Archivo: `src/presentation/payments/return-routes.ts:132-183`
 
 `findAttemptForWebPay()` solo retorna intentos `pending` o `processing`:
 
@@ -906,7 +915,7 @@ Accion requerida:
 
 ### P5. Finalizacion de pago no es transaccional ni emite auditoria/outbox
 
-Archivo: `src/modules/payments/interfaces/return-routes.ts:26-37`
+Archivo: `src/presentation/payments/return-routes.ts:26-37`
 
 La funcion `finalizePaymentAttempt()` ejecuta operaciones separadas:
 
@@ -936,9 +945,9 @@ Accion requerida:
 Archivos:
 
 - `src/web/middleware/csrf.ts:24-40`
-- `src/modules/checkout/interfaces/storefront-routes.ts:8-10`
-- `src/modules/customers/interfaces/storefront-auth-routes.ts:6-8`
-- `src/modules/customers/interfaces/storefront-account-routes.ts:24-26`
+- `src/presentation/checkout/storefront-routes.ts:8-10`
+- `src/presentation/customers/storefront-auth-routes.ts:6-8`
+- `src/presentation/customers/storefront-account-routes.ts:24-26`
 - otros helpers duplicados `getCsrfToken(cookie)`
 
 Aunque se agregaron inputs hidden en formularios, las rutas siguen leyendo:
@@ -964,7 +973,7 @@ Accion requerida:
 
 ### P7. Ordenamiento por precio sigue incompleto sin filtros
 
-Archivo: `src/modules/catalog/application/search-use-cases.ts:44-78`
+Archivo: `src/application/catalog/search-use-cases.ts:44-78`
 
 El branch SQL agregado solo se activa cuando hay filtro de precio o stock:
 
