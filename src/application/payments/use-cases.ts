@@ -1,26 +1,11 @@
 import { getPaymentProvider, type WebhookEvent } from "./provider.ts";
 import { type PaymentStatus } from "../../domain/payments/types.ts";
 import { finalizePaymentAttemptFromProvider, recordPaymentEvent } from "./finalize.ts";
-import type { PaymentRepository } from "./ports/payment-repository.ts";
-import type { PaymentWorkflow } from "./ports/payment-workflow.ts";
+import { DrizzlePaymentRepository } from "../../infrastructure/payments/repository.ts";
+import { DrizzlePaymentWorkflow } from "../../infrastructure/payments/drizzle-payment-workflow.ts";
 
-let paymentRepository: PaymentRepository | null = null;
-let paymentWorkflow: PaymentWorkflow | null = null;
-
-export function setPaymentUseCaseDependencies(deps: { repository: PaymentRepository; workflow: PaymentWorkflow }): void {
-  paymentRepository = deps.repository;
-  paymentWorkflow = deps.workflow;
-}
-
-function repo(): PaymentRepository {
-  if (!paymentRepository) throw new Error("PaymentRepository dependency was not configured");
-  return paymentRepository;
-}
-
-function workflow(): PaymentWorkflow {
-  if (!paymentWorkflow) throw new Error("PaymentWorkflow dependency was not configured");
-  return paymentWorkflow;
-}
+const paymentRepository = new DrizzlePaymentRepository();
+const paymentWorkflow = new DrizzlePaymentWorkflow();
 
 export async function initiatePaymentUseCase(input: {
   orderId: string;
@@ -28,7 +13,7 @@ export async function initiatePaymentUseCase(input: {
   currency: string;
   idempotencyKey: string;
 }): Promise<{ attemptId: string; status: string }> {
-  const r = repo();
+  const r = paymentRepository;
   const existingActive = await r.findLatestActivePaymentAttemptByOrderId(input.orderId);
   if (existingActive) return { attemptId: existingActive.id, status: existingActive.status };
   const existing = await r.findPaymentAttemptByIdempotencyKey(input.idempotencyKey);
@@ -38,7 +23,7 @@ export async function initiatePaymentUseCase(input: {
   const result = await provider.createIntent(input);
   const attemptId = crypto.randomUUID();
 
-  await workflow().createIntentAttempt({
+  await paymentWorkflow.createIntentAttempt({
     attemptId,
     orderId: input.orderId,
     providerName: provider.name,
@@ -72,7 +57,7 @@ export async function handleWebhookUseCase(body: string, signature: string | nul
     };
     const orderId = (resultMeta as Record<string, unknown>)?.external_reference as string | undefined;
     if (orderId) {
-      const attempt = await repo().findLatestActivePaymentAttemptByOrderId(orderId);
+      const attempt = await paymentRepository.findLatestActivePaymentAttemptByOrderId(orderId);
       if (attempt) event.attemptId = attempt.id;
     }
   }
@@ -92,7 +77,7 @@ export async function handleWebhookUseCase(body: string, signature: string | nul
     };
     const orderId = event.orderId || ((event.metadata as Record<string, unknown>)?.order_id as string);
     if (orderId) {
-      const attempt = await repo().findLatestActivePaymentAttemptByOrderId(orderId);
+      const attempt = await paymentRepository.findLatestActivePaymentAttemptByOrderId(orderId);
       if (attempt) event.attemptId = attempt.id;
     }
   }
@@ -100,7 +85,7 @@ export async function handleWebhookUseCase(body: string, signature: string | nul
   if (!event.attemptId) {
     const orderId = event.orderId || ((event.metadata as Record<string, unknown>)?.external_reference as string);
     if (orderId) {
-      const attempt = await repo().findLatestActivePaymentAttemptByOrderId(orderId);
+      const attempt = await paymentRepository.findLatestActivePaymentAttemptByOrderId(orderId);
       if (attempt) event.attemptId = attempt.id;
     }
   }
@@ -113,7 +98,7 @@ export async function handleWebhookUseCase(body: string, signature: string | nul
 }
 
 async function processWebhookEvent(event: WebhookEvent): Promise<{ processed: boolean; reason?: string }> {
-  const attempt = await repo().findPaymentAttemptById(event.attemptId);
+  const attempt = await paymentRepository.findPaymentAttemptById(event.attemptId);
   if (!attempt) {
     await recordPaymentEvent({
       attemptId: event.attemptId,
@@ -183,7 +168,7 @@ async function processWebhookEvent(event: WebhookEvent): Promise<{ processed: bo
 }
 
 export async function getOrderPayments(orderId: string) {
-  const r = repo();
+  const r = paymentRepository;
   const attempts = await r.findPaymentAttemptsByOrderId(orderId);
   const result = [];
   for (const a of attempts) {
@@ -194,5 +179,5 @@ export async function getOrderPayments(orderId: string) {
 }
 
 export async function getPaymentList() {
-  return repo().listPaymentAttempts();
+  return paymentRepository.listPaymentAttempts();
 }

@@ -1,4 +1,5 @@
 import type { CatalogSearchReadModel } from "./ports/catalog-search-read-model.ts";
+import { DrizzleCatalogSearchReadModel } from "../../infrastructure/catalog/drizzle-search-read-model.ts";
 
 export type SearchFilters = {
   query?: string;
@@ -44,18 +45,10 @@ export type AggRow = {
   createdAt: Date;
 };
 
-let defaultReadModel: CatalogSearchReadModel | null = null;
-
-export function setSearchReadModel(rm: CatalogSearchReadModel): void {
-  defaultReadModel = rm;
-}
+const defaultReadModel: CatalogSearchReadModel = new DrizzleCatalogSearchReadModel();
 
 function resolveReadModel(rm?: CatalogSearchReadModel): CatalogSearchReadModel {
-  const model = rm ?? defaultReadModel;
-  if (!model) {
-    throw new Error("CatalogSearchReadModel dependency was not configured");
-  }
-  return model;
+  return rm ?? defaultReadModel;
 }
 
 export async function searchProductsUseCase(filters: SearchFilters, rm?: CatalogSearchReadModel): Promise<PaginatedResults> {

@@ -1,24 +1,16 @@
 import { createProduct, createCategory, createAttribute, createSKU, changeEditorialStatus, type Product } from "../../domain/catalog/entities.ts";
 import { type EditorialStatus } from "../../domain/catalog/types.ts";
-import type { CatalogRepository, CatalogProductRow, CatalogSkuRow, CatalogCategoryRow } from "./ports/catalog-repository.ts";
+import type { CatalogProductRow, CatalogSkuRow, CatalogCategoryRow } from "./ports/catalog-repository.ts";
+import { DrizzleCatalogRepository } from "../../infrastructure/catalog/repository.ts";
 
-let catalogRepository: CatalogRepository | null = null;
-
-export function setCatalogRepository(repository: CatalogRepository): void {
-  catalogRepository = repository;
-}
-
-function repo(): CatalogRepository {
-  if (!catalogRepository) throw new Error("CatalogRepository dependency was not configured");
-  return catalogRepository;
-}
+const catalogRepository = new DrizzleCatalogRepository();
 
 function slugify(text: string): string {
   return text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 export async function getProductList() {
-  const r = repo();
+  const r = catalogRepository;
   const products = await r.findAllProducts();
   const result = [];
   for (const p of products) {
@@ -30,7 +22,7 @@ export async function getProductList() {
 }
 
 export async function getProductDetail(id: string) {
-  const r = repo();
+  const r = catalogRepository;
   const product = await r.findProductById(id);
   if (!product) return null;
   const skus = await r.findSkusByProductId(id);
@@ -41,7 +33,7 @@ export async function getProductDetail(id: string) {
 }
 
 export async function createProductUseCase(input: { name: string; description?: string; categoryId?: string }) {
-  const r = repo();
+  const r = catalogRepository;
   const slug = slugify(input.name);
   const existing = await r.findProductBySlug(slug);
   if (existing) throw new Error(`Product with slug "${slug}" already exists`);
@@ -58,7 +50,7 @@ export async function createProductUseCase(input: { name: string; description?: 
 }
 
 export async function updateProductUseCase(id: string, input: { name?: string; description?: string; categoryId?: string }) {
-  const r = repo();
+  const r = catalogRepository;
   const existing = await r.findProductById(id);
   if (!existing) throw new Error("Product not found");
   const updates: Record<string, unknown> = {};
@@ -69,7 +61,7 @@ export async function updateProductUseCase(id: string, input: { name?: string; d
 }
 
 export async function changeProductStatusUseCase(id: string, targetStatus: string) {
-  const r = repo();
+  const r = catalogRepository;
   const existing = await r.findProductById(id);
   if (!existing) throw new Error("Product not found");
   const status = targetStatus as EditorialStatus;
@@ -79,15 +71,15 @@ export async function changeProductStatusUseCase(id: string, targetStatus: strin
 }
 
 export async function deleteProductUseCase(id: string) {
-  await repo().deleteProduct(id);
+  await catalogRepository.deleteProduct(id);
 }
 
 export async function getCategoryList() {
-  return repo().findAllCategories();
+  return catalogRepository.findAllCategories();
 }
 
 export async function getCategoryDetail(id: string) {
-  const r = repo();
+  const r = catalogRepository;
   const category = await r.findCategoryById(id);
   if (!category) return null;
   const attributes = await r.findAttributesByCategory(id);
@@ -95,7 +87,7 @@ export async function getCategoryDetail(id: string) {
 }
 
 export async function createCategoryUseCase(input: { name: string; parentId?: string; description?: string; sortOrder?: number }) {
-  const r = repo();
+  const r = catalogRepository;
   const slug = slugify(input.name);
   const existing = await r.findCategoryBySlug(slug);
   if (existing) throw new Error(`Category with slug "${slug}" already exists`);
@@ -112,19 +104,19 @@ export async function createCategoryUseCase(input: { name: string; parentId?: st
 }
 
 export async function updateCategoryUseCase(id: string, input: { name?: string; description?: string; sortOrder?: number; isActive?: boolean }) {
-  await repo().updateCategory(id, input);
+  await catalogRepository.updateCategory(id, input);
 }
 
 export async function deleteCategoryUseCase(id: string) {
-  await repo().deleteCategory(id);
+  await catalogRepository.deleteCategory(id);
 }
 
 export async function getAttributeList() {
-  return repo().findAllAttributes();
+  return catalogRepository.findAllAttributes();
 }
 
 export async function createAttributeUseCase(input: { name: string; type: string; options?: string[]; isRequired?: boolean; isFilterable?: boolean }) {
-  const r = repo();
+  const r = catalogRepository;
   const slug = slugify(input.name);
   const attribute = createAttribute({ name: input.name, slug, type: input.type as "text" | "number" | "boolean" | "select" | "multi_select" | "color", options: input.options, isRequired: input.isRequired, isFilterable: input.isFilterable });
   await r.insertAttribute({
@@ -140,7 +132,7 @@ export async function createAttributeUseCase(input: { name: string; type: string
 }
 
 export async function createSkuUseCase(input: { productId: string; sku: string; variantLabel?: string; priceCents: number; currency?: string; compareAtPriceCents?: number }) {
-  const r = repo();
+  const r = catalogRepository;
   const product = await r.findProductById(input.productId);
   if (!product) throw new Error("Product not found");
   const sku = createSKU({
@@ -165,21 +157,21 @@ export async function createSkuUseCase(input: { productId: string; sku: string; 
 }
 
 export async function updateSkuUseCase(id: string, input: { variantLabel?: string; priceCents?: number; compareAtPriceCents?: number; isActive?: boolean }) {
-  await repo().updateSku(id, input);
+  await catalogRepository.updateSku(id, input);
 }
 
 export async function deleteSkuUseCase(id: string) {
-  await repo().deleteSku(id);
+  await catalogRepository.deleteSku(id);
 }
 
 export async function setProductAttributeUseCase(productId: string, attributeId: string, value: string) {
-  await repo().setProductAttribute(productId, attributeId, value);
+  await catalogRepository.setProductAttribute(productId, attributeId, value);
 }
 
 export type SitemapEntry = { slug: string; updatedAt: Date | string };
 
 export async function getPublishedProductsForSitemap(): Promise<SitemapEntry[]> {
-  return repo().findPublishedProductSlugs();
+  return catalogRepository.findPublishedProductSlugs();
 }
 
 export type PdpData = {
@@ -192,7 +184,7 @@ export type PdpData = {
 };
 
 export async function getProductDetailPage(slug: string): Promise<PdpData | null> {
-  const r = repo();
+  const r = catalogRepository;
   const product = await r.findProductBySlug(slug);
   if (!product || product.editorialStatus !== "published") return null;
   const skus = await r.findSkusByProductId(product.id);

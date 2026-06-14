@@ -1,22 +1,14 @@
-import type { OrphanedPayment, PaymentReconciliationRepository, StalePayment } from "./ports/payment-reconciliation-repository.ts";
+import { DrizzlePaymentReconciliationRepository } from "../../infrastructure/payments/drizzle-payment-reconciliation-repository.ts";
+import type { OrphanedPayment, StalePayment } from "./ports/payment-reconciliation-repository.ts";
 
-let reconciliationRepository: PaymentReconciliationRepository | null = null;
-
-export function setPaymentReconciliationRepository(repository: PaymentReconciliationRepository): void {
-  reconciliationRepository = repository;
-}
-
-function repo(): PaymentReconciliationRepository {
-  if (!reconciliationRepository) throw new Error("PaymentReconciliationRepository dependency was not configured");
-  return reconciliationRepository;
-}
+const reconciliationRepository = new DrizzlePaymentReconciliationRepository();
 
 export async function findStalePendingPayments(maxAgeMinutes: number = 30): Promise<StalePayment[]> {
-  return repo().findStalePendingPayments(maxAgeMinutes);
+  return reconciliationRepository.findStalePendingPayments(maxAgeMinutes);
 }
 
 export async function findApprovedPaymentsWithoutConfirmedOrder(): Promise<OrphanedPayment[]> {
-  return repo().findApprovedPaymentsWithoutConfirmedOrder();
+  return reconciliationRepository.findApprovedPaymentsWithoutConfirmedOrder();
 }
 
 export async function reconcileOrphanedPayments(): Promise<{ fixed: number; errors: number }> {
@@ -25,7 +17,7 @@ export async function reconcileOrphanedPayments(): Promise<{ fixed: number; erro
   let errors = 0;
   for (const o of orphans) {
     try {
-      await repo().markOrderConfirmedFromReconciliation(o.orderId, o.id);
+      await reconciliationRepository.markOrderConfirmedFromReconciliation(o.orderId, o.id);
       fixed++;
     } catch {
       errors++;
@@ -40,7 +32,7 @@ export async function failStalePendingPayments(maxAgeMinutes: number = 60): Prom
   let errors = 0;
   for (const p of stale) {
     try {
-      await repo().markPaymentAttemptFailedFromReconciliation(p.id, p.orderId, p.ageMinutes);
+      await reconciliationRepository.markPaymentAttemptFailedFromReconciliation(p.id, p.orderId, p.ageMinutes);
       failed++;
     } catch {
       errors++;

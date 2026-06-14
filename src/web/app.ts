@@ -29,7 +29,6 @@ import { ensureCsrfToken } from "./helpers/csrf.ts";
 import { sanitizeInputPlugin } from "./middleware/sanitize-input.ts";
 import { metrics, recordHttpRequest } from "../shared/infrastructure/metrics.ts";
 import { getPool } from "../shared/infrastructure/db/index.ts";
-import "./composition/payments.ts";
 
 const config = getConfig();
 const logger = createLogger(config.LOG_LEVEL);

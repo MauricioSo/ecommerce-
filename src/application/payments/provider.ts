@@ -1,3 +1,7 @@
+import { getConfig } from "../../shared/infrastructure/config.ts";
+import { MercadoPagoProvider } from "../../infrastructure/payments/mercadopago-provider.ts";
+import { WebPayProvider } from "../../infrastructure/payments/webpay-provider.ts";
+
 export type PaymentProviderResult = {
   success: boolean;
   providerIntentId: string;
@@ -69,15 +73,28 @@ export class MockPaymentProvider implements PaymentProvider {
   }
 }
 
-let provider: PaymentProvider | null = null;
+function createPaymentProvider(): PaymentProvider {
+  const config = getConfig();
+  switch (config.PAYMENT_PROVIDER) {
+    case "mercadopago":
+      if (!config.MP_ACCESS_TOKEN) throw new Error("MP_ACCESS_TOKEN is required for MercadoPago");
+      return new MercadoPagoProvider(config.MP_ACCESS_TOKEN, config.MP_WEBHOOK_SECRET, config.MP_PUBLIC_KEY, config.BASE_URL);
+    case "webpay":
+      return new WebPayProvider(config.TBK_COMMERCE_CODE, config.TBK_API_KEY, config.TBK_ENV, config.BASE_URL);
+    default:
+      return new MockPaymentProvider();
+  }
+}
+
+let defaultProvider: PaymentProvider | null = null;
+let override: PaymentProvider | null = null;
 
 export function getPaymentProvider(): PaymentProvider {
-  if (!provider) {
-    throw new Error("PaymentProvider dependency was not configured");
-  }
-  return provider;
+  if (override) return override;
+  if (!defaultProvider) defaultProvider = createPaymentProvider();
+  return defaultProvider;
 }
 
 export function setPaymentProvider(p: PaymentProvider): void {
-  provider = p;
+  override = p;
 }
